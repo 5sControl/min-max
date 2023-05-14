@@ -1,0 +1,4 @@
+# Usage: pip install -r requirements.txt
+
+yolov7detect>=1.0.1
+httplib2==0.22.0
