@@ -5,6 +5,6 @@ RUN pip install -r requirements.txt
 RUN apt-get install ffmpeg libsm6 libxext6  -y
 
 WORKDIR /var/www/5scontrol
-COPY . .
+COPY min_max .
 RUN mkdir -p /usr/src/app
 ENTRYPOINT ["python", "-u", "main.py"]
