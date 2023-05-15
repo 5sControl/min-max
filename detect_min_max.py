@@ -10,7 +10,7 @@ from models.experimental import attempt_load
 import asyncio
 import logging
 import colorlog
-from visualization import draw_rect_with_text
+from utils.visualization import draw_rect_with_text
 from collections import deque
 
 
@@ -207,7 +207,7 @@ async def run_min_max(areas, username, password, algorithm, ip_address, server_u
                         num_boxes_per_area.clear()
 
                     elif is_human_was_detected and not is_human_in_area_now:  # start counting
-                        logger.debug("Boxes counting started")
+                        logger.debug("Boxes counting was started")
                         with torch.no_grad():
                             pred_boxes = box_model(img, augment=opt['augment'])[0]
                             pred_boxes = non_max_suppression(pred_boxes, opt['conf_thres'],
@@ -221,7 +221,7 @@ async def run_min_max(areas, username, password, algorithm, ip_address, server_u
 
                     elif not is_human_was_detected and not is_human_in_area_now and\
                         len(n_boxes_history):
-                        logger.debug("Boxes are counting")
+                        logger.debug("Boxes counting...")
                         with torch.no_grad():
                             pred_boxes = box_model(img, augment=opt['augment'])[0]
                             pred_boxes = non_max_suppression(pred_boxes, opt['conf_thres'], opt['iou_thres'],
