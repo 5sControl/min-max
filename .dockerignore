@@ -1,1 +1,6 @@
-.cache
+**/dataset
+**/database
+**/images
+docker-compose_dev.yml
+images
+videos
