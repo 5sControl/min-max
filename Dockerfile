@@ -7,4 +7,5 @@ RUN apt-get install ffmpeg libsm6 libxext6  -y
 WORKDIR /var/www/5scontrol
 COPY . .
 RUN mkdir -p /usr/src/app
-ENTRYPOINT ["python", "-u", "main.py"]
+RUN pip install torch==1.13.1+cpu torchvision==0.14.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+ENTRYPOINT ["python", "-u", "run.py"]

@@ -7,7 +7,6 @@ import datetime
 import uuid
 import warnings
 from collections import deque
-from pathlib import Path
 import requests
 import os
 import ast
@@ -16,17 +15,16 @@ import time
 warnings.filterwarnings("ignore")
 
 
-areas = os.environ.get("AREAS")
-username = os.environ.get("USERNAME")
-password = os.environ.get("PASSWORD")
-ip_address = os.environ.get("IP_ADDRESS")
-server_url = os.environ.get("SERVER_URL")
-box_model_weights = os.environ.get("BOX_MODEL")
-human_model_weights = os.environ.get("HUMAN_MODEL")
-img_size = os.environ.get("IMG_SIZE")
-n_steps = os.environ.get("N_STEPS")
-source = os.environ.get("SOURCE")
-
+areas = os.environ.get("areas")
+username = os.environ.get("username")
+password = os.environ.get("password")
+server_url = os.environ.get("server_url")
+box_model_weights = "min_max_v0.2.6.pt"
+human_model_weights = "yolov7.pt"
+img_size = 640
+n_steps = 5
+source = os.environ.get("camera_url")
+folder = os.environ.get("folder")
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
@@ -50,12 +48,6 @@ human_model = TracedModel(human_model, device)
 
 dataset = LoadImages(source, img_size=img_size, stride=stride,
                      username=username, password=password)
-
-if device.type != 'cpu':
-    box_model(
-        torch.zeros(1, 3, img_size, img_size).to(
-            device).type_as(next(box_model.parameters()))
-    )  # run once
 
 is_human_was_detected = True
 n_iters = 0
@@ -92,7 +84,7 @@ for path, img, im0s, _ in dataset:
         except Exception:
             item_name = False
         item_image_name = str(uuid.uuid4())
-        image_name_url = f'images/{ip_address[0]}/' + item_image_name + '.jpg'
+        image_name_url = folder + '/' + item_image_name + '.jpg'
         img_copy = im0.copy()
 
         rectangle_color = (41, 123, 255)
@@ -125,7 +117,6 @@ for path, img, im0s, _ in dataset:
                                                      classes=opt['classes'],
                                                      agnostic=opt['agnostic_nms']
                                                      )
-                print(img)
                 for det in pred_boxes:
                     counter += len(det)
                 num_boxes_per_area.append(counter)
@@ -138,11 +129,8 @@ for path, img, im0s, _ in dataset:
                     pred_boxes = non_max_suppression(pred_boxes, opt['conf_thres'], opt['iou_thres'],
                                                      classes=opt['classes'],
                                                      agnostic=opt['agnostic_nms'])
-                print(img)
                 for det in pred_boxes:
                     counter += len(det)
-                    print(len(det))
-                    print("____")
                 num_boxes_per_area.append(counter)
 
     is_human_was_detected = is_human_in_area_now
@@ -163,7 +151,7 @@ for path, img, im0s, _ in dataset:
             except Exception:
                 item_name = False
 
-            image_name_url = f'images/{ip_address[0]}/' + \
+            image_name_url = folder + '/' + \
                 str(uuid.uuid4()) + '.jpg'
             img_copy = im0.copy()
             img_rect = im0.copy()
@@ -203,16 +191,16 @@ for path, img, im0s, _ in dataset:
                 }
             )
             cv2.imwrite(image_name_url, img_rect)
-
-        save_photo_url = f'images/{ip_address[0]}/' + \
+        save_photo_url = folder + '/' + \
             str(uuid.uuid4()) + '.jpg'
+
         cv2.imwrite(save_photo_url, im0)
         photo_start = {
             'url': save_photo_url,
             'date': datetime.datetime.now()
         }
         report_for_send = {
-            'camera': ip_address[0],
+            'camera': os.path.basename(folder),
             'algorithm': "min_max_control",
             'start_tracking': str(photo_start['date']),
             'stop_tracking': str(photo_start['date']),
