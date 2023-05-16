@@ -1,14 +1,12 @@
-import yolov7
-import os
-from dotenv import load_dotenv
-import warnings
-warnings.filterwarnings("ignore")
-
-load_dotenv("settings.env")
+import json
 
 
-path = os.environ.get("BOX_MODEL")
+opt = {"exist_ok": False, "name": "exp", "project": "runs/detect", "update": False,
+       "augment": False, "agnostic_nms": False, "classes": [0], "nosave": True, "save_conf": False,
+       "device": "cpu", "iou_thres": 0.45, "conf_thres": 0.4}
 
-model = yolov7.load(path)
-print(model)
+with open("confs/configs.json", "w") as conf:
+    json.dump(opt, conf)
 
+with open("confs/configs.json", "r") as conf:
+    print(json.load(conf))

@@ -3,14 +3,16 @@ from models.experimental import attempt_load
 from utils.min_max_utils import *
 from utils.torch_utils import select_device, TracedModel
 from utils.general import check_img_size, non_max_suppression, set_logging
+from utils.HTTPLIB2Capture import HTTPLIB2Capture
 import datetime
 import uuid
 import warnings
 from collections import deque
 import requests
 import os
+import json
 import ast
-import time
+
 
 warnings.filterwarnings("ignore")
 
@@ -25,15 +27,15 @@ img_size = 640
 n_steps = 5
 source = os.environ.get("camera_url")
 folder = os.environ.get("folder")
+print("areas - ", areas)
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
 n_boxes_history = deque(maxlen=history_length)
 
-opt = {"exist_ok": False, "name": "exp", "project": "runs/detect", "update": False,
-       "augment": False, "agnostic_nms": False, "classes": [0], "nosave": True, "save_conf": False,
-       "device": "cpu", "iou_thres": 0.45, "conf_thres": 0.4}
+with open("confs/configs.json", "r") as conf:
+    opt = json.load(conf)
 
 
 set_logging()
@@ -46,16 +48,16 @@ img_size = check_img_size(img_size, s=stride)
 box_model = TracedModel(box_model, device)
 human_model = TracedModel(human_model, device)
 
-dataset = LoadImages(source, img_size=img_size, stride=stride,
-                     username=username, password=password)
+dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
+                          username=username, password=password)
 
 is_human_was_detected = True
 n_iters = 0
-for path, img, im0s, _ in dataset:
+while (True):
+    path, im0s = dataset.get_snapshot()
     if not path:
-        time.sleep(1)
+        logger.warning("Img path is none")
         continue
-    time.sleep(1)
     n_iters += 1
     if n_iters % 20 == 0:
         logger.debug("20 detect iterations passed")
@@ -190,10 +192,11 @@ for path, img, im0s, _ in dataset:
                     "low_stock_level": is_red_line
                 }
             )
+            if not os.path.exists(folder):
+                os.makedirs(folder)
             cv2.imwrite(image_name_url, img_rect)
         save_photo_url = folder + '/' + \
             str(uuid.uuid4()) + '.jpg'
-
         cv2.imwrite(save_photo_url, im0)
         photo_start = {
             'url': save_photo_url,
@@ -212,11 +215,11 @@ for path, img, im0s, _ in dataset:
         logger.info(
             '\n'.join(['<<<<<<<<<<<<<<<<<SEND REPORT!!!!!!!>>>>>>>>>>>>>>',
                        str(report_for_send),
-                       f'http://{server_url[0]}:8000/api/reports/report-with-photos/'])
+                       f'{server_url}:8000/api/reports/report-with-photos/'])
         )
         try:
             requests.post(
-                url=f'http://{server_url[0]}:80/api/reports/report-with-photos/', json=report_for_send)
+                url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)
         except Exception as exc:
             print(exc, 'req exc')
             pass
