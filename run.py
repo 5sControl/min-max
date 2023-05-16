@@ -1,9 +1,9 @@
 from utils.visualization import draw_rect_with_text
-from models.experimental import attempt_load
 from utils.min_max_utils import *
 from utils.torch_utils import select_device, TracedModel
-from utils.general import check_img_size, non_max_suppression, set_logging
+from utils.general import check_img_size, set_logging
 from utils.HTTPLIB2Capture import HTTPLIB2Capture
+from ObjectDetectionModel import ObjDetectModel
 import datetime
 import uuid
 import warnings
@@ -12,8 +12,10 @@ import requests
 import os
 import json
 import ast
+import dotenv
 
 
+dotenv.load_dotenv("confs/settings.env")
 warnings.filterwarnings("ignore")
 
 
@@ -40,13 +42,25 @@ with open("confs/configs.json", "r") as conf:
 
 set_logging()
 device = select_device(opt['device'])
-box_model = attempt_load(box_model_weights, map_location=device)
-human_model = attempt_load(human_model_weights, map_location=device)
-stride = int(box_model.stride.max())
-img_size = check_img_size(img_size, s=stride)
 
-box_model = TracedModel(box_model, device)
-human_model = TracedModel(human_model, device)
+
+box_model = ObjDetectModel(
+    box_model_weights,
+    device,
+    opt['conf_thres'],
+    opt['iou_thres'],
+    opt['classes']
+)
+human_model = ObjDetectModel(
+    human_model_weights,
+    device,
+    opt['conf_thres'],
+    opt['iou_thres'],
+    opt['classes']
+)
+
+stride = box_model.stride
+img_size = check_img_size(img_size, s=stride)
 
 dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
                           username=username, password=password)
@@ -65,18 +79,13 @@ while (True):
     img_for_human = im0.copy()
 
     full_img = conver_image(img_for_human, img_size, stride, device)
-    with torch.no_grad():  # Calculating gradients would cause a GPU memory leak
-
-        pred_humans = human_model(full_img, augment=opt['augment'])[0]
-        pred_humans = non_max_suppression(pred_humans, opt['conf_thres'], opt['iou_thres'],
-                                          classes=opt['classes'],
-                                          agnostic=opt['agnostic_nms'])
-        is_human_in_area_now = bool(torch.numel(pred_humans[0]))
+    is_human_in_area_now = human_model(full_img) != 0
 
     if is_human_in_area_now:
         logger.debug("Human was detected")
 
     num_boxes_per_area = []
+    n_items = 0
 
     for area_index, item in enumerate(areas):  # for each area
         counter = 0
@@ -93,7 +102,7 @@ while (True):
         text = f"Id: {itemid}"
         if item_name:
             text = f"Id: {itemid}, Name: {item_name}"
-
+        n_items += len(item['coords'])
         for coord in item['coords']:
 
             crop_im = im0[
@@ -112,32 +121,16 @@ while (True):
 
             elif is_human_was_detected and not is_human_in_area_now:  # start counting
                 logger.debug("Boxes counting was started")
-                with torch.no_grad():
-                    pred_boxes = box_model(img, augment=opt['augment'])[0]
-                    pred_boxes = non_max_suppression(pred_boxes, opt['conf_thres'],
-                                                     opt['iou_thres'],
-                                                     classes=opt['classes'],
-                                                     agnostic=opt['agnostic_nms']
-                                                     )
-                for det in pred_boxes:
-                    counter += len(det)
-                num_boxes_per_area.append(counter)
+                num_boxes_per_area.append(box_model(img))
 
             elif not is_human_was_detected and not is_human_in_area_now and \
                     len(n_boxes_history):
                 logger.debug("Boxes counting...")
-                with torch.no_grad():
-                    pred_boxes = box_model(img, augment=opt['augment'])[0]
-                    pred_boxes = non_max_suppression(pred_boxes, opt['conf_thres'], opt['iou_thres'],
-                                                     classes=opt['classes'],
-                                                     agnostic=opt['agnostic_nms'])
-                for det in pred_boxes:
-                    counter += len(det)
-                num_boxes_per_area.append(counter)
+                num_boxes_per_area.append(box_model(img))
 
     is_human_was_detected = is_human_in_area_now
 
-    if len(num_boxes_per_area) == len(areas):
+    if len(num_boxes_per_area) >= n_items:
         n_boxes_history.append(num_boxes_per_area)
 
     if len(n_boxes_history) >= n_steps:
