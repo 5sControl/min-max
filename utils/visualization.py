@@ -10,7 +10,7 @@ def draw_rect_with_text(img: np.array, rect_coords: tuple, text: str, color, **r
         text,
         (x1 + 30, y1 + 30),
         cv2.FONT_HERSHEY_SIMPLEX,
-        1.0,
+        0.8,
         color,
-        2)
+        1)
     return image
