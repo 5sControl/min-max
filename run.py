@@ -1,12 +1,11 @@
-from min_max_utils.visualization import draw_rect_with_text
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
-from ObjectDetectionModel import ObjDetectModel
-import datetime
+from models.ObjectDetectionModel import ObjDetectModel
+from min_max_utils.torch_utils import select_device
+from min_max_utils.img_process_utils import check_img_size, convert_image
 import uuid
 import warnings
 from collections import deque
-import requests
 import os
 import json
 import ast
@@ -22,7 +21,7 @@ username = os.environ.get("username")
 password = os.environ.get("password")
 server_url = os.environ.get("server_url")
 box_model_weights = "min_max_v0.2.6.pt"
-human_model_weights = "yolov7.pt"
+human_model_weights = "min_max_v0.2.6h.pt"
 img_size = 640
 n_steps = 5
 source = os.environ.get("camera_url")
@@ -63,7 +62,7 @@ dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
 
 is_human_was_detected = True
 n_iters = 0
-while (True):
+while True:
     path, im0s = dataset.get_snapshot()
     if not path:
         logger.warning("Img path is none")
@@ -107,7 +106,7 @@ while (True):
             ]
 
             img = convert_image(crop_im, img_size, stride, device)
-            if is_human_was_detected and is_human_in_area_now:  # wait for human dis
+            if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
                 num_boxes_per_area.clear()
 
@@ -130,87 +129,5 @@ while (True):
         n_boxes_history.append(num_boxes_per_area)
 
     if len(n_boxes_history) >= n_steps:
-        red_lines = find_red_line(im0)
-        report = []
-        n_boxes_history = np.array(n_boxes_history).mean(
-            axis=0).round().astype(int)
-        for area_index, item in enumerate(areas):
-            itemid = item['itemId']
-
-            try:
-                item_name = item['itemName']
-            except Exception:
-                item_name = False
-
-            image_name_url = folder + '/' + \
-                str(uuid.uuid4()) + '.jpg'
-            img_copy = im0.copy()
-            img_rect = im0.copy()
-
-            rectangle_color = (41, 255, 26)
-            text = f"Id: {itemid}"
-            if item_name:
-                text = f"Id: {itemid}, Name: {item_name}"
-
-            for coord in item['coords']:
-                x1, x2, y1, y2 = tuple(map(round, coord.values()))
-                img_rect = draw_rect_with_text(
-                    img_rect,
-                    (x1, y1, x2, y2),
-                    text,
-                    rectangle_color,
-                    thickness=2
-                )
-
-                crop_im = im0[
-                    round(coord['y1']):round(coord['y2']),
-                    round(coord['x1']):round(coord['x2'])
-                ]
-                is_red_line = False
-                for line in red_lines:
-                    if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
-                        is_red_line = True
-                        break
-
-            mean_val = n_boxes_history[area_index]
-            report.append(
-                {
-                    "itemId": itemid,
-                    "count": int(mean_val),
-                    "image_item": image_name_url,
-                    "low_stock_level": is_red_line
-                }
-            )
-            if not os.path.exists(folder):
-                os.makedirs(folder)
-            cv2.imwrite(image_name_url, img_rect)
-        save_photo_url = folder + '/' + \
-            str(uuid.uuid4()) + '.jpg'
-        cv2.imwrite(save_photo_url, im0)
-        photo_start = {
-            'url': save_photo_url,
-            'date': datetime.datetime.now()
-        }
-        report_for_send = {
-            'camera': os.path.basename(folder),
-            'algorithm': "min_max_control",
-            'start_tracking': str(photo_start['date']),
-            'stop_tracking': str(photo_start['date']),
-            'photos': [{'image': str(photo_start['url']), 'date': str(photo_start['date'])}],
-            'violation_found': False,
-            'extra': report
-        }
-
-        logger.info(
-            '\n'.join(['<<<<<<<<<<<<<<<<<SEND REPORT!!!!!!!>>>>>>>>>>>>>>',
-                       str(report_for_send),
-                       f'{server_url}:8000/api/reports/report-with-photos/'])
-        )
-        try:
-            requests.post(
-                url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)
-        except Exception as exc:
-            print(exc, 'req exc')
-            pass
-        # clear history for next iteration
+        send_report(n_boxes_history, im0, areas, folder, logger, server_url)
         n_boxes_history = deque(maxlen=history_length)

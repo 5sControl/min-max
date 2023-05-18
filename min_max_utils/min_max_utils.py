@@ -1,28 +1,12 @@
-from min_max_utils.letterbox import letterbox
 import logging
+import uuid
+import datetime
 import colorlog
 import cv2
 import numpy as np
-import torch
 import os
-import subprocess
-import datetime
-from pathlib import Path
-import math
-
-
-def make_divisible(x, divisor):
-    # Returns x evenly divisible by divisor
-    return math.ceil(x / divisor) * divisor
-
-
-def check_img_size(img_size, s=32):
-    # Verify img_size is a multiple of stride s
-    new_size = make_divisible(img_size, int(s))  # ceil gs-multiple
-    if new_size != img_size:
-        print('WARNING: --img-size %g must be multiple of max stride %g, updating to %g' %
-              (img_size, s, new_size))
-    return new_size
+import requests
+from min_max_utils.visualization_utils import draw_rect_with_text
 
 
 def create_logger():
@@ -81,81 +65,106 @@ def is_line_in_area(area, line):
     x1, y1, x2, y2 = line
     minX, minY, maxX, maxY = area
 
-    if (x1 <= minX and x2 <= minX) or (y1 <= minY and y2 <= minY) or (x1 >= maxX and x2 >= maxX) or (y1 >= maxY and y2 >= maxY):
+    if (x1 <= minX and x2 <= minX) or (y1 <= minY and y2 <= minY) or (x1 >= maxX and x2 >= maxX) or (
+            y1 >= maxY and y2 >= maxY):
         return False
 
     m = (y2 - y1) / (x2 - x1 + 1e-3)
 
     y = m * (minX - x1) + y1
-    if y > minY and y < maxY:
+    if minY < y < maxY:
         return True
 
     y = m * (maxX - x1) + y1
-    if y > minY and y < maxY:
+    if minY < y < maxY:
         return True
 
     x = (minY - y1) / m + x1
-    if x > minX and x < maxX:
+    if minX < x < maxX:
         return True
 
     x = (maxY - y1) / m + x1
-    if x > minX and x < maxX:
+    if minX < x < maxX:
         return True
 
     return False
 
 
-def convert_image(img_, img_size, stride, device):
-    img = letterbox(img_, img_size, stride=stride)[0]
-    img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-    img = np.ascontiguousarray(img)
-    img = torch.from_numpy(img).to(device)
-    img = img.float()  # uint8 to fp16/32
-    img /= 255.0  # 0 - 255 to 0.0 - 1.0
-    if img.ndimension() == 3:
-        img = img.unsqueeze(0)
-    return img
+def send_report(n_boxes_history, img, areas, folder, logger, server_url):
+    red_lines = find_red_line(img)
+    report = []
+    n_boxes_history = np.array(n_boxes_history).mean(axis=0).round().astype(int)
+    for area_index, item in enumerate(areas):
+        itemid = item['itemId']
 
+        try:
+            item_name = item['itemName']
+        except Exception:
+            item_name = False
 
-def git_describe(path=Path(__file__).parent):  # path must be a directory
-    # return human-readable git description, i.e. v5.0-5-g3e25f1e https://git-scm.com/docs/git-describe
-    s = f'git -C {path} describe --tags --long --always'
+        image_name_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
+        img_copy = img.copy()
+        img_rect = img.copy()
+
+        rectangle_color = (41, 255, 26)
+        text = f"Id: {itemid}"
+        if item_name:
+            text = f"Id: {itemid}, Name: {item_name}"
+        is_red_line = False
+        for coord in item['coords']:
+            x1, x2, y1, y2 = tuple(map(round, coord.values()))
+            img_rect = draw_rect_with_text(
+                img_rect,
+                (x1, y1, x2, y2),
+                text,
+                rectangle_color,
+                thickness=2
+            )
+
+            crop_im = img[
+                      round(coord['y1']):round(coord['y2']),
+                      round(coord['x1']):round(coord['x2'])
+                      ]
+            for line in red_lines:
+                if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
+                    is_red_line = True
+                    break
+
+        mean_val = n_boxes_history[area_index]
+        report.append(
+            {
+                "itemId": itemid,
+                "count": int(mean_val),
+                "image_item": image_name_url,
+                "low_stock_level": is_red_line
+            }
+        )
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        cv2.imwrite(image_name_url, img_rect)
+    save_photo_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
+    cv2.imwrite(save_photo_url, img)
+    photo_start = {
+        'url': save_photo_url,
+        'date': datetime.datetime.now()
+    }
+    report_for_send = {
+        'camera': os.path.basename(folder),
+        'algorithm': "min_max_control",
+        'start_tracking': str(photo_start['date']),
+        'stop_tracking': str(photo_start['date']),
+        'photos': [{'image': str(photo_start['url']), 'date': str(photo_start['date'])}],
+        'violation_found': False,
+        'extra': report
+    }
+
+    logger.info(
+        '\n'.join(['<<<<<<<<<<<<<<<<<SEND REPORT!!!!!!!>>>>>>>>>>>>>>',
+                   str(report_for_send),
+                   f'{server_url}:8000/api/reports/report-with-photos/'])
+    )
     try:
-        return subprocess.check_output(s, shell=True, stderr=subprocess.STDOUT).decode()[:-1]
-    except subprocess.CalledProcessError as e:
-        return ''  # not a git repository
-
-
-def date_modified(path=__file__):
-    # return human-readable file modification date, i.e. '2021-3-26'
-    t = datetime.datetime.fromtimestamp(Path(path).stat().st_mtime)
-    return f'{t.year}-{t.month}-{t.day}'
-
-
-def select_device(device='', batch_size=None):
-    # device = 'cpu' or '0' or '0,1,2,3'
-    # string
-    s = f'YOLOR 🚀 {git_describe() or date_modified()} torch {torch.__version__} '
-    cpu = device.lower() == 'cpu'
-    if cpu:
-        # force torch.cuda.is_available() = False
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    elif device:  # non-cpu device requested
-        os.environ['CUDA_VISIBLE_DEVICES'] = device  # set environment variable
-        assert torch.cuda.is_available(
-        ), f'CUDA unavailable, invalid device {device} requested'  # check availability
-
-    cuda = not cpu and torch.cuda.is_available()
-    if cuda:
-        n = torch.cuda.device_count()
-        if n > 1 and batch_size:  # check that batch_size is compatible with device_count
-            assert batch_size % n == 0, f'batch-size {batch_size} not multiple of GPU count {n}'
-        space = ' ' * len(s)
-        for i, d in enumerate(device.split(',') if device else range(n)):
-            p = torch.cuda.get_device_properties(i)
-            # bytes to MB
-            s += f"{'' if i == 0 else space}CUDA:{d} ({p.name}, {p.total_memory / 1024 ** 2}MB)\n"
-    else:
-        s += 'CPU\n'
-
-    return torch.device('cuda:0' if cuda else 'cpu')
+        requests.post(
+            url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)
+    except Exception as exc:
+        logger.error("Error while sending report occurred: {}".format(exc))
