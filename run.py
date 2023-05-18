@@ -1,8 +1,6 @@
-from utils.visualization import draw_rect_with_text
-from utils.min_max_utils import *
-from utils.torch_utils import select_device, TracedModel
-from utils.general import check_img_size, set_logging
-from utils.HTTPLIB2Capture import HTTPLIB2Capture
+from min_max_utils.visualization import draw_rect_with_text
+from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
+from min_max_utils.min_max_utils import *
 from ObjectDetectionModel import ObjDetectModel
 import datetime
 import uuid
@@ -39,8 +37,6 @@ n_boxes_history = deque(maxlen=history_length)
 with open("confs/configs.json", "r") as conf:
     opt = json.load(conf)
 
-
-set_logging()
 device = select_device(opt['device'])
 
 
@@ -78,7 +74,7 @@ while (True):
     im0 = im0s
     img_for_human = im0.copy()
 
-    full_img = conver_image(img_for_human, img_size, stride, device)
+    full_img = convert_image(img_for_human, img_size, stride, device)
     is_human_in_area_now = human_model(full_img) != 0
 
     if is_human_in_area_now:
@@ -110,7 +106,7 @@ while (True):
                 round(coord['x1']):round(coord['x2'])
             ]
 
-            img = conver_image(crop_im, img_size, stride, device)
+            img = convert_image(crop_im, img_size, stride, device)
             if is_human_was_detected and is_human_in_area_now:  # wait for human dis
                 n_boxes_history.clear()
                 num_boxes_per_area.clear()
