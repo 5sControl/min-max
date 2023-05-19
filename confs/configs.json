@@ -6,9 +6,12 @@
     "classes": [
         0
     ],
-    "nosave": true,
     "save_conf": false,
     "device": "cpu",
     "iou_thres": 0.45,
-    "conf_thres": 0.4
+    "conf_thres": 0.4,
+    "box_detect_model": "min_max_models/min_max_v0.3.7.pt",
+    "human_detect_model": "min_max_models/min_max_v1.0h.pt",
+    "img_size": 640,
+    "n_steps": 5
 }
