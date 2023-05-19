@@ -1,10 +1,10 @@
 from typing import Any
 import torch
 import torchvision
-import yolov7
 import time
 import numpy as np
-import math
+import yolov7
+from min_max_models.yolov7_utils import *
 
 
 def xywh2xyxy(x):
@@ -153,6 +153,26 @@ class ObjDetectModel:
         self.model.iou = iou_thresh
         self.model.classes = classes
         self.stride = int(self.model.stride.max())
+
+    def load_model(model_path, autoshape=True, device='cpu', trace=False, size=640, hf_model=False):
+        """
+        Creates a specified YOLOv7 model
+        Arguments:
+            model_path (str): path of the model
+            device (str): select device that model will be loaded (cpu, cuda)
+            trace (bool): if True, model will be traced
+            size (int): size of the input image
+            half (bool): if True, model will be in half precision
+            hf_model (bool): if True, model will be loaded from huggingface hub    
+        Returns:
+            pytorch model
+        (Adapted from yolov7.hubconf.create)
+        """
+
+        model_file = attempt_download(model_path)
+        model = attempt_load(model_file, map_location=device)
+        model = TracedModel(model, device, size)
+        return model
 
     @torch.no_grad()
     def __call__(self, img) -> Any:
