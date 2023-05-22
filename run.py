@@ -6,12 +6,10 @@ import uuid
 import warnings
 from collections import deque
 import os
-import dotenv
 from confs.load_configs import *
 import ast
 
 
-dotenv.load_dotenv("confs/settings.env")
 warnings.filterwarnings("ignore")
 
 
@@ -72,7 +70,7 @@ while True:
     num_boxes_per_area = []
     n_items = 0
 
-    for area_index, item in enumerate(areas):  # for each area
+    for area_index, item in enumerate(areas.copy()):  # for each area
         counter = 0
         itemid = item['itemId']
         try:
@@ -88,13 +86,18 @@ while True:
         if item_name:
             text = f"Id: {itemid}, Name: {item_name}"
         n_items += len(item['coords'])
-        for coord in item['coords']:
-
+        for subarr_idx, coord in enumerate(item['coords'].copy()):
+            x1, y1, x2, y2 = list(
+                map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
+            if x1 == x2 or y1 == y2:
+                logger.warning("Empty area")
+                n_items -= 1
+                drop_area(areas, area_index, item, subarr_idx)
+                continue
             crop_im = im0[
                 round(coord['y1']):round(coord['y2']),
                 round(coord['x1']):round(coord['x2'])
             ]
-
             img = convert_image(crop_im, img_size, stride, DEVICE)
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
