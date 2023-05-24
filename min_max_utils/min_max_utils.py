@@ -9,8 +9,17 @@ import requests
 from min_max_utils.visualization_utils import draw_rect_with_text
 
 
+def drop_area(areas: list[dict], item_idx: int, item: dict[list], subarea_idx: int):
+    logger = logging.getLogger('min_max_logger')
+    if len(item['coords']) == 1:
+        logger.info("Item was dropped - {}".format(areas.pop(item_idx)))
+    else:
+        logger.info(
+            "Subarea was dropped - {}".format(item.get('coords').pop(subarea_idx)))
+
+
 def create_logger():
-    logger = logging.getLogger('my_logger')
+    logger = logging.getLogger('min_max_logger')
     handler = colorlog.StreamHandler()
     handler.setFormatter(colorlog.ColoredFormatter(
         '%(log_color)s%(asctime)s %(levelname)s: %(message)s',
@@ -93,7 +102,8 @@ def is_line_in_area(area, line):
 def send_report(n_boxes_history, img, areas, folder, logger, server_url):
     red_lines = find_red_line(img)
     report = []
-    n_boxes_history = np.array(n_boxes_history).mean(axis=0).round().astype(int)
+    n_boxes_history = np.array(n_boxes_history).mean(
+        axis=0).round().astype(int)
     for area_index, item in enumerate(areas):
         itemid = item['itemId']
 
@@ -122,9 +132,9 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url):
             )
 
             crop_im = img[
-                      round(coord['y1']):round(coord['y2']),
-                      round(coord['x1']):round(coord['x2'])
-                      ]
+                round(coord['y1']):round(coord['y2']),
+                round(coord['x1']):round(coord['x2'])
+            ]
             for line in red_lines:
                 if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
                     is_red_line = True

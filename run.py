@@ -1,18 +1,15 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
-from models.ObjectDetectionModel import ObjDetectModel
-from min_max_utils.torch_utils import select_device
+from min_max_models.ObjectDetectionModel import ObjDetectModel
 from min_max_utils.img_process_utils import check_img_size, convert_image
 import uuid
 import warnings
 from collections import deque
 import os
-import json
+from confs.load_configs import *
 import ast
-import dotenv
 
 
-dotenv.load_dotenv("confs/settings.env")
 warnings.filterwarnings("ignore")
 
 
@@ -20,10 +17,6 @@ areas = os.environ.get("areas")
 username = os.environ.get("username")
 password = os.environ.get("password")
 server_url = os.environ.get("server_url")
-box_model_weights = "min_max_v0.2.6.pt"
-human_model_weights = "min_max_v0.2.6h.pt"
-img_size = 640
-n_steps = 5
 source = os.environ.get("camera_url")
 folder = os.environ.get("folder")
 print("areas - ", areas)
@@ -33,29 +26,24 @@ areas = ast.literal_eval(areas)
 history_length = 15
 n_boxes_history = deque(maxlen=history_length)
 
-with open("confs/configs.json", "r") as conf:
-    opt = json.load(conf)
-
-device = select_device(opt['device'])
-
 
 box_model = ObjDetectModel(
-    box_model_weights,
-    device,
-    opt['conf_thres'],
-    opt['iou_thres'],
-    opt['classes']
+    BOX_MODEL_PATH,
+    DEVICE,
+    CONF_THRES,
+    IOU_THRES,
+    CLASSES
 )
 human_model = ObjDetectModel(
-    human_model_weights,
-    device,
-    opt['conf_thres'],
-    opt['iou_thres'],
-    opt['classes']
+    HUMAN_MODEL_PATH,
+    DEVICE,
+    CONF_THRES,
+    IOU_THRES,
+    CLASSES
 )
 
 stride = box_model.stride
-img_size = check_img_size(img_size, s=stride)
+img_size = check_img_size(IMG_SIZE, s=stride)
 
 dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
                           username=username, password=password)
@@ -73,7 +61,7 @@ while True:
     im0 = im0s
     img_for_human = im0.copy()
 
-    full_img = convert_image(img_for_human, img_size, stride, device)
+    full_img = convert_image(img_for_human, img_size, stride, DEVICE)
     is_human_in_area_now = human_model(full_img) != 0
 
     if is_human_in_area_now:
@@ -82,7 +70,7 @@ while True:
     num_boxes_per_area = []
     n_items = 0
 
-    for area_index, item in enumerate(areas):  # for each area
+    for area_index, item in enumerate(areas.copy()):  # for each area
         counter = 0
         itemid = item['itemId']
         try:
@@ -98,14 +86,19 @@ while True:
         if item_name:
             text = f"Id: {itemid}, Name: {item_name}"
         n_items += len(item['coords'])
-        for coord in item['coords']:
-
+        for subarr_idx, coord in enumerate(item['coords'].copy()):
+            x1, y1, x2, y2 = list(
+                map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
+            if x1 == x2 or y1 == y2:
+                logger.warning("Empty area")
+                n_items -= 1
+                drop_area(areas, area_index, item, subarr_idx)
+                continue
             crop_im = im0[
                 round(coord['y1']):round(coord['y2']),
                 round(coord['x1']):round(coord['x2'])
             ]
-
-            img = convert_image(crop_im, img_size, stride, device)
+            img = convert_image(crop_im, img_size, stride, DEVICE)
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
                 num_boxes_per_area.clear()
@@ -128,6 +121,6 @@ while True:
     if len(num_boxes_per_area) >= n_items:
         n_boxes_history.append(num_boxes_per_area)
 
-    if len(n_boxes_history) >= n_steps:
+    if len(n_boxes_history) >= N_STEPS:
         send_report(n_boxes_history, im0, areas, folder, logger, server_url)
         n_boxes_history = deque(maxlen=history_length)
