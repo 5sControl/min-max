@@ -99,7 +99,7 @@ def is_line_in_area(area, line):
     return False
 
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url):
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, img_shapes):
     red_lines = find_red_line(img)
     report = []
     n_boxes_history = np.array(n_boxes_history).mean(
@@ -130,6 +130,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url):
                 rectangle_color,
                 thickness=2
             )
+            for bbox_coords in boxes_coords[area_index]:
+                pass
 
             crop_im = img[
                 round(coord['y1']):round(coord['y2']),
@@ -139,7 +141,6 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url):
                 if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
                     is_red_line = True
                     break
-
         mean_val = n_boxes_history[area_index]
         report.append(
             {

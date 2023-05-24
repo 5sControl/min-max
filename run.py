@@ -1,15 +1,17 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectModel
-from min_max_utils.img_process_utils import check_img_size, convert_image
+from min_max_utils.img_process_utils import convert_image, get_inverse_letterbox_map
 import uuid
 import warnings
 from collections import deque
 import os
+from dotenv import load_dotenv
 from confs.load_configs import *
 import ast
 
 
+load_dotenv('confs/settings.env')
 warnings.filterwarnings("ignore")
 
 
@@ -25,6 +27,8 @@ logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
 n_boxes_history = deque(maxlen=history_length)
+inverse_map = get_inverse_letterbox_map(
+    np.array([[0, 0], [1920, 1089]]), (640, 640))
 
 
 box_model = ObjDetectModel(
@@ -43,9 +47,8 @@ human_model = ObjDetectModel(
 )
 
 stride = box_model.stride
-img_size = check_img_size(IMG_SIZE, s=stride)
 
-dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
+dataset = HTTPLIB2Capture(source, stride=stride,
                           username=username, password=password)
 
 is_human_was_detected = True
@@ -61,8 +64,8 @@ while True:
     im0 = im0s
     img_for_human = im0.copy()
 
-    full_img = convert_image(img_for_human, img_size, stride, DEVICE)
-    is_human_in_area_now = human_model(full_img) != 0
+    full_img = convert_image(img_for_human)
+    is_human_in_area_now = human_model(full_img)[0] != 0
 
     if is_human_in_area_now:
         logger.debug("Human was detected")
@@ -98,7 +101,7 @@ while True:
                 round(coord['y1']):round(coord['y2']),
                 round(coord['x1']):round(coord['x2'])
             ]
-            img = convert_image(crop_im, img_size, stride, DEVICE)
+            img = convert_image(crop_im)
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
                 num_boxes_per_area.clear()
@@ -119,8 +122,11 @@ while True:
     is_human_was_detected = is_human_in_area_now
 
     if len(num_boxes_per_area) >= n_items:
-        n_boxes_history.append(num_boxes_per_area)
+        n_boxes_history.append([el[0] for el in num_boxes_per_area])
 
     if len(n_boxes_history) >= N_STEPS:
-        send_report(n_boxes_history, im0, areas, folder, logger, server_url)
+        coords = [el[1] for el in num_boxes_per_area]
+        img_shapes = [el[2] for el in num_boxes_per_area]
+        send_report(n_boxes_history, im0, areas,
+                    folder, logger, server_url, coords, img_shapes)
         n_boxes_history = deque(maxlen=history_length)
