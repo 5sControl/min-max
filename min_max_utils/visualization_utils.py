@@ -14,3 +14,11 @@ def draw_rect_with_text(img: np.array, rect_coords: tuple, text: str, color, tex
         text_color,
         1)
     return image
+
+
+def draw_line(img: np.array, line: np.array, area_coord: np.array, color=(0, 0, 255), **kwargs):
+    x1_area, _, x2_area, __ = area_coord
+    x1_line, y1, x2_line, y2 = line
+    x_start = x1_line if x1_area < x1_line else x1_area
+    x_end = x2_line if x2_line < x2_area else x2_area
+    cv2.line(img, (x_start, y1), (x_end, y2), color, **kwargs)

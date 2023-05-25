@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import os
 import requests
-from min_max_utils.visualization_utils import draw_rect_with_text
+from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
 from min_max_utils.img_process_utils import transfer_coords
 
 
@@ -103,9 +103,11 @@ def is_line_in_area(area, line):
 def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
     red_lines = find_red_line(img)
     report = []
+    print("history - ", n_boxes_history)
     n_boxes_history = np.array(n_boxes_history).mean(
         axis=0).round().astype(int)
-    for area_index, item in enumerate(areas):
+    print("history - ", n_boxes_history)
+    for item_index, item in enumerate(areas):
         itemid = item['itemId']
 
         try:
@@ -118,38 +120,39 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_rect = img.copy()
 
         rectangle_color = (0, 102, 204)
-        text = f"Id: {itemid}"
-        text = f"{item_name}: {n_boxes_history[area_index]}"
+        text = f"{item_name}: {n_boxes_history[item_index]}"
         is_red_line = False
-        for coord in item['coords']:
-            x1, x2, y1, y2 = tuple(map(round, coord.values()))
+
+        for subarr_idx, coord in enumerate(item['coords']):
+            area_coords = tuple(map(round, coord.values()))
+            x1, x2, y1, y2 = area_coords
+            area_coords = (x1, y1, x2, y2)
             img_rect = draw_rect_with_text(
                 img_rect,
-                (x1, y1, x2, y2),
+                area_coords,
                 text,
                 rectangle_color,
                 (255, 255, 255),
                 thickness=2
             )
-            for idx, bbox_coords in enumerate(boxes_coords[area_index]):
+            for idx, bbox_coords in enumerate(boxes_coords[subarr_idx]):
                 text = str(idx + 1) if idx == 0 or \
-                    idx == len(boxes_coords[area_index]) - 1 or \
+                    idx == len(boxes_coords[subarr_idx]) - 1 or \
                     (idx + 1) % 5 == 0 else ''
-                text_color = (0, 255, 128) if idx == len(
-                    boxes_coords[area_index]) - 1 else (255, 255, 255)
+                text_color = (0, 225, 128) if idx == len(
+                    boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
                 coords = transfer_coords(
-                    bbox_coords[:4], (x1, x2, y1, y2))
+                    bbox_coords[:4], area_coords)
                 draw_rect_with_text(img_rect, coords, text,
                                     (255, 51, 255), text_color, thickness=2)
-            crop_im = img[
-                round(coord['y1']):round(coord['y2']),
-                round(coord['x1']):round(coord['x2'])
-            ]
+
             for line in red_lines:
                 if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
+                    draw_line(img_rect, line,
+                              area_coords, thickness=2)
                     is_red_line = True
                     break
-        mean_val = n_boxes_history[area_index]
+        mean_val = n_boxes_history[item_index]
         report.append(
             {
                 "itemId": itemid,
