@@ -1,7 +1,7 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectModel
-from min_max_utils.img_process_utils import convert_image, get_inverse_letterbox_map
+from min_max_utils.img_process_utils import convert_image
 import uuid
 import warnings
 from collections import deque
@@ -27,8 +27,6 @@ logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
 n_boxes_history = deque(maxlen=history_length)
-inverse_map = get_inverse_letterbox_map(
-    np.array([[0, 0], [1920, 1089]]), (640, 640))
 
 
 box_model = ObjDetectModel(
@@ -126,7 +124,6 @@ while True:
 
     if len(n_boxes_history) >= N_STEPS:
         coords = [el[1] for el in num_boxes_per_area]
-        img_shapes = [el[2] for el in num_boxes_per_area]
         send_report(n_boxes_history, im0, areas,
-                    folder, logger, server_url, coords, img_shapes)
+                    folder, logger, server_url, coords)
         n_boxes_history = deque(maxlen=history_length)

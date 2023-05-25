@@ -7,6 +7,7 @@ import numpy as np
 import os
 import requests
 from min_max_utils.visualization_utils import draw_rect_with_text
+from min_max_utils.img_process_utils import transfer_coords
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict[list], subarea_idx: int):
@@ -99,7 +100,7 @@ def is_line_in_area(area, line):
     return False
 
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, img_shapes):
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
     red_lines = find_red_line(img)
     report = []
     n_boxes_history = np.array(n_boxes_history).mean(
@@ -116,10 +117,9 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_copy = img.copy()
         img_rect = img.copy()
 
-        rectangle_color = (41, 255, 26)
+        rectangle_color = (0, 102, 204)
         text = f"Id: {itemid}"
-        if item_name:
-            text = f"Id: {itemid}, Name: {item_name}"
+        text = f"{item_name}: {n_boxes_history[area_index]}"
         is_red_line = False
         for coord in item['coords']:
             x1, x2, y1, y2 = tuple(map(round, coord.values()))
@@ -128,11 +128,19 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 (x1, y1, x2, y2),
                 text,
                 rectangle_color,
+                (255, 255, 255),
                 thickness=2
             )
-            for bbox_coords in boxes_coords[area_index]:
-                pass
-
+            for idx, bbox_coords in enumerate(boxes_coords[area_index]):
+                text = str(idx + 1) if idx == 0 or \
+                    idx == len(boxes_coords[area_index]) - 1 or \
+                    (idx + 1) % 5 == 0 else ''
+                text_color = (0, 255, 128) if idx == len(
+                    boxes_coords[area_index]) - 1 else (255, 255, 255)
+                coords = transfer_coords(
+                    bbox_coords[:4], (x1, x2, y1, y2))
+                draw_rect_with_text(img_rect, coords, text,
+                                    (255, 51, 255), text_color, thickness=2)
             crop_im = img[
                 round(coord['y1']):round(coord['y2']),
                 round(coord['x1']):round(coord['x2'])
