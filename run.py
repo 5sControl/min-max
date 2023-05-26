@@ -1,15 +1,16 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectModel
-from min_max_utils.img_process_utils import check_img_size, convert_image
-import uuid
+from min_max_utils.img_process_utils import convert_image
 import warnings
 from collections import deque
 import os
+from dotenv import load_dotenv
 from confs.load_configs import *
 import ast
 
 
+load_dotenv('confs/settings.env')
 warnings.filterwarnings("ignore")
 
 
@@ -24,7 +25,7 @@ print("areas - ", areas)
 logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
-n_boxes_history = deque(maxlen=history_length)
+n_boxes_history = []
 
 
 box_model = ObjDetectModel(
@@ -43,49 +44,36 @@ human_model = ObjDetectModel(
 )
 
 stride = box_model.stride
-img_size = check_img_size(IMG_SIZE, s=stride)
 
-dataset = HTTPLIB2Capture(source, img_size=img_size, stride=stride,
+dataset = HTTPLIB2Capture(source, stride=stride,
                           username=username, password=password)
 
 is_human_was_detected = True
 n_iters = 0
 while True:
-    path, im0s = dataset.get_snapshot()
-    if not path:
-        logger.warning("Img path is none")
+    img = dataset.get_snapshot()
+    if img is None:
+        logger.warning("Empty image")
         continue
     n_iters += 1
     if n_iters % 20 == 0:
         logger.debug("20 detect iterations passed")
-    im0 = im0s
-    img_for_human = im0.copy()
+    img_for_human = img.copy()
 
-    full_img = convert_image(img_for_human, img_size, stride, DEVICE)
-    is_human_in_area_now = human_model(full_img) != 0
+    img_for_human = convert_image(img_for_human)
+    is_human_in_area_now = human_model(img_for_human)[0] != 0
 
     if is_human_in_area_now:
         logger.debug("Human was detected")
 
-    num_boxes_per_area = []
+    areas_stat = []
     n_items = 0
 
     for area_index, item in enumerate(areas.copy()):  # for each area
         counter = 0
-        itemid = item['itemId']
-        try:
-            item_name = item['itemName']
-        except Exception:
-            item_name = False
-        item_image_name = str(uuid.uuid4())
-        image_name_url = folder + '/' + item_image_name + '.jpg'
-        img_copy = im0.copy()
 
-        rectangle_color = (41, 123, 255)
-        text = f"Id: {itemid}"
-        if item_name:
-            text = f"Id: {itemid}, Name: {item_name}"
         n_items += len(item['coords'])
+        item_stat = []
         for subarr_idx, coord in enumerate(item['coords'].copy()):
             x1, y1, x2, y2 = list(
                 map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
@@ -94,33 +82,41 @@ while True:
                 n_items -= 1
                 drop_area(areas, area_index, item, subarr_idx)
                 continue
-            crop_im = im0[
-                round(coord['y1']):round(coord['y2']),
-                round(coord['x1']):round(coord['x2'])
-            ]
-            img = convert_image(crop_im, img_size, stride, DEVICE)
+            cropped_img = convert_image(
+                img[
+                    round(coord['y1']):round(coord['y2']),
+                    round(coord['x1']):round(coord['x2'])
+                ]
+            )
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
-                num_boxes_per_area.clear()
+                areas_stat.clear()
+                break
 
             elif not is_human_was_detected and is_human_in_area_now:  # will start in next iter
                 n_boxes_history.clear()
-                num_boxes_per_area.clear()
+                areas_stat.clear()
+                break
 
             elif is_human_was_detected and not is_human_in_area_now:  # start counting
                 logger.debug("Boxes counting was started")
-                num_boxes_per_area.append(box_model(img))
+                item_stat.append(box_model(cropped_img))
 
             elif not is_human_was_detected and not is_human_in_area_now and \
                     len(n_boxes_history):
                 logger.debug("Boxes counting...")
-                num_boxes_per_area.append(box_model(img))
+                item_stat.append(box_model(cropped_img))
+
+        areas_stat.append(item_stat)
 
     is_human_was_detected = is_human_in_area_now
 
-    if len(num_boxes_per_area) >= n_items:
-        n_boxes_history.append(num_boxes_per_area)
+    if len(areas_stat) >= len(areas):
+        n_boxes_history.append(areas_stat)
 
-    if len(n_boxes_history) >= N_STEPS:
-        send_report(n_boxes_history, im0, areas, folder, logger, server_url)
-        n_boxes_history = deque(maxlen=history_length)
+    if len(n_boxes_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
+        print(n_boxes_history)
+        exit(1)
+        send_report(n_boxes_history, img, areas,
+                    folder, logger, server_url, coords)
+        n_boxes_history = []

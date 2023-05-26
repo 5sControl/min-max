@@ -239,7 +239,7 @@ class ObjDetectModel:
             agnostic=False
         )
         count = 0
-        result = []
+        result = nms_pred[0]
         for detections in nms_pred:
             count += len(detections)
-        return count
+        return [count, result]

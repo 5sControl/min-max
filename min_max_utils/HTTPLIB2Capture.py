@@ -18,7 +18,7 @@ class HTTPLIB2Capture:
             nparr = np.frombuffer(content, np.uint8)
             img0 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             assert img0 is not None, 'Image Not Found ' + self.camera_url
-            return self.camera_url, img0
+            return img0
         except Exception as e:
             print("Data exc - ", e)
-            return None, None
+            return None
