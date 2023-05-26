@@ -1,3 +1,4 @@
+from collections import Counter
 import logging
 import uuid
 import datetime
@@ -100,27 +101,26 @@ def is_line_in_area(area, line):
     return False
 
 
+def most_common(lst):
+    data = Counter(lst)
+    return max(lst, key=data.get)
+
+
 def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
     red_lines = find_red_line(img)
     report = []
     print("history - ", n_boxes_history)
-    n_boxes_history = np.array(n_boxes_history).mean(
-        axis=0).round().astype(int)
-    print("history - ", n_boxes_history)
     for item_index, item in enumerate(areas):
         itemid = item['itemId']
 
-        try:
-            item_name = item['itemName']
-        except Exception:
-            item_name = False
+        item_name = item['itemName']
 
         image_name_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
-        img_copy = img.copy()
         img_rect = img.copy()
 
         rectangle_color = (0, 102, 204)
-        text = f"{item_name}: {n_boxes_history[item_index]}"
+        n_boxes = sum(n_boxes_history[item_index])
+        text = f"{item_name}: {n_boxes}"
         is_red_line = False
 
         for subarr_idx, coord in enumerate(item['coords']):

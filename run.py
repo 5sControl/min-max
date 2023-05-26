@@ -3,7 +3,6 @@ from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectModel
 from min_max_utils.img_process_utils import convert_image
 import warnings
-from collections import deque
 import os
 from dotenv import load_dotenv
 from confs.load_configs import *
@@ -25,7 +24,7 @@ print("areas - ", areas)
 logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
-n_boxes_history = []
+stat_history = []
 
 
 box_model = ObjDetectModel(
@@ -89,12 +88,12 @@ while True:
                 ]
             )
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
-                n_boxes_history.clear()
+                stat_history.clear()
                 areas_stat.clear()
                 break
 
             elif not is_human_was_detected and is_human_in_area_now:  # will start in next iter
-                n_boxes_history.clear()
+                stat_history.clear()
                 areas_stat.clear()
                 break
 
@@ -103,7 +102,7 @@ while True:
                 item_stat.append(box_model(cropped_img))
 
             elif not is_human_was_detected and not is_human_in_area_now and \
-                    len(n_boxes_history):
+                    len(stat_history):
                 logger.debug("Boxes counting...")
                 item_stat.append(box_model(cropped_img))
 
@@ -112,11 +111,27 @@ while True:
     is_human_was_detected = is_human_in_area_now
 
     if len(areas_stat) >= len(areas):
-        n_boxes_history.append(areas_stat)
+        stat_history.append(areas_stat)
 
-    if len(n_boxes_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
-        print(n_boxes_history)
-        exit(1)
-        send_report(n_boxes_history, img, areas,
-                    folder, logger, server_url, coords)
+    if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
         n_boxes_history = []
+        coords_history = []
+        for item_idx, item_iter in enumerate(stat_history[0]):
+                n_box_item_ctxt = []
+                coord_item_ctxt = []
+                for arr_idx, arr in enumerate(item_iter):
+                    arr_n_hist = []
+                    for tmp_st_idx in range(len(stat_history)):
+                        arr_n_hist.append(stat_history[tmp_st_idx][item_idx][arr_idx][0])
+                    msc_n = most_common(arr_n_hist)
+                    idx = 0
+                    while len(stat_history[idx][item_idx][arr_idx][1]) != msc_n:
+                        idx += 1
+                    n_box_item_ctxt.append(msc_n)
+                    coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
+                n_boxes_history.append(n_box_item_ctxt)
+                coords_history.append(coord_item_ctxt)
+
+        send_report(n_boxes_history, img, areas,
+                    folder, logger, server_url, coords_history)
+        stat_history.clear()
