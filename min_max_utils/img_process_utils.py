@@ -50,21 +50,18 @@ def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> list:
     prev_coords = prev_coords.numpy()
     local_boxes = prev_coords.reshape(-1, 2, 2)
     x1n, y1n, x2n, y2n = inverse_map(local_boxes).reshape(-1)
-    print((x1n, x2n, y1n, y2n), area_coords, sep='\n')
     coords = (x1n + x1, y1n + y1, x2n + x1, y2n + y1)
     return coords
 
 
 def convert_image(img_, device='cpu'):
-    try:
-        img = letterbox(img_)
-        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-        img = np.ascontiguousarray(img)
-        img = torch.from_numpy(img).to(device)
-        img = img.float()  # uint8 to fp16/32
-        img /= 255.0  # 0 - 255 to 0.0 - 1.0
-        if img.ndimension() == 3:
-            img = img.unsqueeze(0)
-        return img
-    except Exception as exc:
-        logger.warning("Empty image")
+    img = letterbox(img_)
+    img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+    img = np.ascontiguousarray(img)
+    img = torch.from_numpy(img).to(device)
+    img = img.float()  # uint8 to fp16/32
+    img /= 255.0  # 0 - 255 to 0.0 - 1.0
+    if img.ndimension() == 3:
+        img = img.unsqueeze(0)
+    return img
+

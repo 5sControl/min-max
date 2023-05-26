@@ -109,7 +109,6 @@ def most_common(lst):
 def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
     red_lines = find_red_line(img)
     report = []
-    print("history - ", n_boxes_history)
     for item_index, item in enumerate(areas):
         itemid = item['itemId']
 

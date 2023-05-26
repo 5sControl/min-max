@@ -19,7 +19,6 @@ password = os.environ.get("password")
 server_url = os.environ.get("server_url")
 source = os.environ.get("camera_url")
 folder = os.environ.get("folder")
-print("areas - ", areas)
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
@@ -90,12 +89,10 @@ while True:
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 stat_history.clear()
                 areas_stat.clear()
-                break
 
             elif not is_human_was_detected and is_human_in_area_now:  # will start in next iter
                 stat_history.clear()
                 areas_stat.clear()
-                break
 
             elif is_human_was_detected and not is_human_in_area_now:  # start counting
                 logger.debug("Boxes counting was started")
@@ -105,13 +102,15 @@ while True:
                     len(stat_history):
                 logger.debug("Boxes counting...")
                 item_stat.append(box_model(cropped_img))
-
-        areas_stat.append(item_stat)
+        if item_stat:
+            areas_stat.append(item_stat)
 
     is_human_was_detected = is_human_in_area_now
 
     if len(areas_stat) >= len(areas):
-        stat_history.append(areas_stat)
+        stat_history.append(areas_stat.copy())
+
+    areas_stat.clear()
 
     if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
         n_boxes_history = []
