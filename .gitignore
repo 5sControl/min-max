@@ -23,6 +23,8 @@
 !cfg/yolov3*.cfg
 *.pt
 .vscode/
+*.env           
+*.yml
 
 storage.googleapis.com
 runs/*
