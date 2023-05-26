@@ -25,7 +25,7 @@ print("areas - ", areas)
 logger = create_logger()
 areas = ast.literal_eval(areas)
 history_length = 15
-n_boxes_history = deque(maxlen=history_length)
+n_boxes_history = []
 
 
 box_model = ObjDetectModel(
@@ -52,7 +52,7 @@ is_human_was_detected = True
 n_iters = 0
 while True:
     img = dataset.get_snapshot()
-    if not img:
+    if img is None:
         logger.warning("Empty image")
         continue
     n_iters += 1
@@ -73,6 +73,7 @@ while True:
         counter = 0
 
         n_items += len(item['coords'])
+        item_stat = []
         for subarr_idx, coord in enumerate(item['coords'].copy()):
             x1, y1, x2, y2 = list(
                 map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
@@ -90,27 +91,32 @@ while True:
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 n_boxes_history.clear()
                 areas_stat.clear()
+                break
 
             elif not is_human_was_detected and is_human_in_area_now:  # will start in next iter
                 n_boxes_history.clear()
                 areas_stat.clear()
+                break
 
             elif is_human_was_detected and not is_human_in_area_now:  # start counting
                 logger.debug("Boxes counting was started")
-                areas_stat.append(box_model(cropped_img))
+                item_stat.append(box_model(cropped_img))
 
             elif not is_human_was_detected and not is_human_in_area_now and \
                     len(n_boxes_history):
                 logger.debug("Boxes counting...")
-                areas_stat.append(box_model(cropped_img))
+                item_stat.append(box_model(cropped_img))
+
+        areas_stat.append(item_stat)
 
     is_human_was_detected = is_human_in_area_now
 
-    if len(areas_stat) >= n_items:
-        n_boxes_history.append([el[0] for el in areas_stat])
+    if len(areas_stat) >= len(areas):
+        n_boxes_history.append(areas_stat)
 
-    if len(n_boxes_history) >= N_STEPS:
-        coords = [el[1] for el in areas_stat]
+    if len(n_boxes_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
+        print(n_boxes_history)
+        exit(1)
         send_report(n_boxes_history, img, areas,
                     folder, logger, server_url, coords)
-        n_boxes_history = deque(maxlen=history_length)
+        n_boxes_history = []

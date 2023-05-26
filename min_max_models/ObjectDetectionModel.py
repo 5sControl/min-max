@@ -242,4 +242,4 @@ class ObjDetectModel:
         result = nms_pred[0]
         for detections in nms_pred:
             count += len(detections)
-        return (count, result)
+        return [count, result]

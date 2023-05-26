@@ -44,14 +44,14 @@ def get_inverse_letterbox_map(region, target_size):
 
 
 def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> list:
-    x1, x2, y1, y2 = area_coords
+    x1, y1, x2, y2 = area_coords
     inverse_map = get_inverse_letterbox_map(
         np.array([[0, 0], (x2 - x1, y2 - y1)]), (640, 640))
     prev_coords = prev_coords.numpy()
     local_boxes = prev_coords.reshape(-1, 2, 2)
     x1n, y1n, x2n, y2n = inverse_map(local_boxes).reshape(-1)
     print((x1n, x2n, y1n, y2n), area_coords, sep='\n')
-    coords = (x1n + x1, y1n, x2n + x1, y2n)
+    coords = (x1n + x1, y1n + y1, x2n + x1, y2n + y1)
     return coords
 
 
