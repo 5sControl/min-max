@@ -119,14 +119,15 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_rect = img.copy()
 
         rectangle_color = (0, 102, 204)
-        n_boxes = sum(n_boxes_history[item_index])
-        text = f"{item_name}: {n_boxes}"
+
         is_red_line = False
 
         for subarr_idx, coord in enumerate(item['coords']):
             area_coords = tuple(map(round, coord.values()))
             x1, x2, y1, y2 = area_coords
             area_coords = (x1, y1, x2, y2)
+            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx]}"
+
             img_rect = draw_rect_with_text(
                 img_rect,
                 area_coords,
@@ -135,7 +136,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 (255, 255, 255),
                 thickness=2
             )
-            for idx, bbox_coords in enumerate(boxes_coords[subarr_idx]):
+            for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
                 text = str(idx + 1) if idx == 0 or \
                     idx == len(boxes_coords[subarr_idx]) - 1 or \
                     (idx + 1) % 5 == 0 else ''
@@ -152,11 +153,11 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                               area_coords, thickness=2)
                     is_red_line = True
                     break
-        mean_val = n_boxes_history[item_index]
+
         report.append(
             {
                 "itemId": itemid,
-                "count": int(mean_val),
+                "count": sum(n_boxes_history[item_index]),
                 "image_item": image_name_url,
                 "low_stock_level": is_red_line
             }
