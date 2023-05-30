@@ -1,7 +1,7 @@
-import math
 import cv2
 import numpy as np
 import torch
+from PIL import ImageFont, ImageDraw, Image
 
 
 def shape2size(shape): return np.array([shape[1], shape[0]])
@@ -56,12 +56,17 @@ def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> list:
 
 def convert_image(img_, device='cpu'):
     img = letterbox(img_)
-    img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+    img = img[:, :, ::-1].transpose(2, 0, 1)  
     img = np.ascontiguousarray(img)
     img = torch.from_numpy(img).to(device)
-    img = img.float()  # uint8 to fp16/32
-    img /= 255.0  # 0 - 255 to 0.0 - 1.0
+    img = img.float()
+    img /= 255.0  
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
     return img
+
+def save_image(img: np.array, name: str):
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(img)
+    pil_img.save(name, 'PNG', transparency=(10, 10, 10))
 

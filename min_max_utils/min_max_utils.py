@@ -8,7 +8,7 @@ import numpy as np
 import os
 import requests
 from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
-from min_max_utils.img_process_utils import transfer_coords
+from min_max_utils.img_process_utils import transfer_coords, save_image
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict[list], subarea_idx: int):
@@ -114,7 +114,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
 
         item_name = item['itemName']
 
-        image_name_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
+        image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
         img_rect = img.copy()
 
         rectangle_color = (0, 102, 204)
@@ -136,22 +136,26 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 thickness=2
             )
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
+                for line in red_lines:
+                    if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
+                        draw_line(img_rect, line,
+                                area_coords, thickness=4)
+                        is_red_line = True
+                        break
+
                 text = str(idx + 1) if idx == 0 or \
                     idx == len(boxes_coords[subarr_idx]) - 1 or \
                     (idx + 1) % 5 == 0 else ''
+                
                 text_color = (0, 225, 128) if idx == len(
                     boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
+                
                 coords = transfer_coords(
                     bbox_coords[:4], area_coords)
+                
                 draw_rect_with_text(img_rect, coords, text,
                                     (255, 51, 255), text_color, thickness=2)
 
-            for line in red_lines:
-                if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
-                    draw_line(img_rect, line,
-                              area_coords, thickness=2)
-                    is_red_line = True
-                    break
 
         report.append(
             {
@@ -163,9 +167,9 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         )
         if not os.path.exists(folder):
             os.makedirs(folder)
-        cv2.imwrite(image_name_url, img_rect)
+        save_image(img_rect, image_name_url)
     save_photo_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
-    cv2.imwrite(save_photo_url, img)
+    save_image(img, save_photo_url)
     photo_start = {
         'url': save_photo_url,
         'date': datetime.datetime.now()
