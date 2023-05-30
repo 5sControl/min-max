@@ -11,11 +11,11 @@ def draw_rect_with_text(img: np.array, rect_coords: tuple, text: str, color, tex
     return image
 
 def get_scaled_font(text, area_size, img_fraction=0.5):
-    font = ImageFont.truetype("Inter-Bold.ttf", 1)
+    font = ImageFont.truetype("fonts/Inter-Bold.ttf", 1)
     fontsize = 1
     while font.getsize(text)[0] < img_fraction * area_size:
         fontsize += 1
-        font = ImageFont.truetype("Inter-Bold.ttf", fontsize)
+        font = ImageFont.truetype("fonts/Inter-Bold.ttf", fontsize)
     return font
 
 def draw_text(img: np.array, text: str, coords: tuple[int], text_color: tuple[int], area_size: int):

@@ -119,13 +119,20 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
 
         rectangle_color = (0, 102, 204)
 
-        is_red_line = False
-
         for subarr_idx, coord in enumerate(item['coords']):
             area_coords = tuple(map(round, coord.values()))
             x1, x2, y1, y2 = area_coords
             area_coords = (x1, y1, x2, y2)
-            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx]}"
+
+            is_red_line = False
+
+            for line in red_lines:
+                if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
+                    draw_line(img_rect, line,
+                            area_coords, thickness=4)
+                    is_red_line = True
+            
+            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line else 'low stock level'}"
 
             img_rect = draw_rect_with_text(
                 img_rect,
@@ -136,12 +143,6 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 thickness=2
             )
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                for line in red_lines:
-                    if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
-                        draw_line(img_rect, line,
-                                area_coords, thickness=4)
-                        is_red_line = True
-                        break
 
                 text = str(idx + 1) if idx == 0 or \
                     idx == len(boxes_coords[subarr_idx]) - 1 or \
