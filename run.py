@@ -22,7 +22,6 @@ folder = os.environ.get("folder")
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
-history_length = 15
 stat_history = []
 
 
