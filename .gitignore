@@ -24,7 +24,6 @@
 *.pt
 .vscode/
 *.env           
-*.yml
 
 storage.googleapis.com
 runs/*
