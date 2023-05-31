@@ -1,3 +1,4 @@
+import json
 from collections import Counter
 import logging
 import uuid
@@ -11,7 +12,7 @@ from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
 from min_max_utils.img_process_utils import transfer_coords, save_image
 
 
-def drop_area(areas: list[dict], item_idx: int, item: dict[list], subarea_idx: int):
+def drop_area(areas: list[dict], item_idx: int, item: dict, subarea_idx: int):
     logger = logging.getLogger('min_max_logger')
     if len(item['coords']) == 1:
         logger.info("Item was dropped - {}".format(areas.pop(item_idx)))
@@ -61,41 +62,41 @@ def find_red_line(img):
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
     dst = cv2.Canny(src, 50, 200, None, 3)
-    linesP = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
-                             threshold=61, lines=None, minLineLength=25, maxLineGap=10)
+    lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
+                              threshold=61, lines=None, minLineLength=25, maxLineGap=10)
     lines = []
-    if linesP is not None:
-        for i in range(0, len(linesP)):
-            l = linesP[i][0]
-            if abs(l[1] - l[3]) < 25:
-                lines.append(l)
+    if lines_p is not None:
+        for i in range(0, len(lines_p)):
+            line = lines_p[i][0]
+            if abs(line[1] - line[3]) < 25:
+                lines.append(line)
     return lines
 
 
 def is_line_in_area(area, line):
     x1, y1, x2, y2 = line
-    minX, minY, maxX, maxY = area
+    min_x, min_y, max_x, max_y = area
 
-    if (x1 <= minX and x2 <= minX) or (y1 <= minY and y2 <= minY) or (x1 >= maxX and x2 >= maxX) or (
-            y1 >= maxY and y2 >= maxY):
+    if (x1 <= min_x and x2 <= min_x) or (y1 <= min_y and y2 <= min_y) or (x1 >= max_x and x2 >= max_x) or (
+            y1 >= max_y and y2 >= max_y):
         return False
 
     m = (y2 - y1) / (x2 - x1 + 1e-3)
 
-    y = m * (minX - x1) + y1
-    if minY < y < maxY:
+    y = m * (min_x - x1) + y1
+    if min_y < y < max_y:
         return True
 
-    y = m * (maxX - x1) + y1
-    if minY < y < maxY:
+    y = m * (max_x - x1) + y1
+    if min_y < y < max_y:
         return True
 
-    x = (minY - y1) / m + x1
-    if minX < x < maxX:
+    x = (min_y - y1) / m + x1
+    if min_x < x < max_x:
         return True
 
-    x = (maxY - y1) / m + x1
-    if minX < x < maxX:
+    x = (max_y - y1) / m + x1
+    if min_x < x < max_x:
         return True
 
     return False
@@ -119,20 +120,21 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
 
         rectangle_color = (0, 102, 204)
 
+        red_lines_in_subareas: list[bool] = [False] * len(item['coords'])
         for subarr_idx, coord in enumerate(item['coords']):
             area_coords = tuple(map(round, coord.values()))
             x1, x2, y1, y2 = area_coords
             area_coords = (x1, y1, x2, y2)
 
-            is_red_line = False
+            is_red_line_in_subarea = False
 
             for line in red_lines:
                 if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
-                    draw_line(img_rect, line,
-                            area_coords, thickness=4)
-                    is_red_line = True
-            
-            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line else 'low stock level'}"
+                    img_rect = draw_line(img_rect, line, area_coords, thickness=4)
+                    is_red_line_in_subarea = True
+
+            red_lines_in_subareas[subarr_idx] = is_red_line_in_subarea
+            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
             img_rect = draw_rect_with_text(
                 img_rect,
@@ -143,27 +145,24 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 thickness=2
             )
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-
                 text = str(idx + 1) if idx == 0 or \
-                    idx == len(boxes_coords[subarr_idx]) - 1 or \
-                    (idx + 1) % 5 == 0 else ''
-                
-                text_color = (0, 225, 128) if idx == len(
-                    boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
-                
-                coords = transfer_coords(
-                    bbox_coords[:4], area_coords)
-                
+                                       idx == len(boxes_coords[subarr_idx]) - 1 or \
+                                       (idx + 1) % 5 == 0 else ''
+
+                text_color = (0, 225, 128) if idx == len(boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
+
+                coords = transfer_coords(bbox_coords[:4], area_coords)
+
                 draw_rect_with_text(img_rect, coords, text,
                                     (255, 51, 255), text_color, thickness=2)
-
 
         report.append(
             {
                 "itemId": itemid,
                 "count": sum(n_boxes_history[item_index]),
                 "image_item": image_name_url,
-                "low_stock_level": is_red_line
+                "low_stock_level": any(red_lines_in_subareas),
+                "red_lines": red_lines_in_subareas
             }
         )
         if not os.path.exists(folder):
@@ -190,6 +189,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                    str(report_for_send),
                    f'{server_url}:8000/api/reports/report-with-photos/'])
     )
+    with open("req.json", "w") as f:
+        json.dump(report_for_send, f)
     try:
         requests.post(
             url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)

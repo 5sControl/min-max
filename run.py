@@ -8,10 +8,8 @@ from dotenv import load_dotenv
 from confs.load_configs import *
 import ast
 
-
 load_dotenv('confs/settings.env')
 warnings.filterwarnings("ignore")
-
 
 areas = os.environ.get("areas")
 username = os.environ.get("username")
@@ -23,7 +21,6 @@ folder = os.environ.get("folder")
 logger = create_logger()
 areas = ast.literal_eval(areas)
 stat_history = []
-
 
 box_model = ObjDetectModel(
     BOX_MODEL_PATH,
@@ -111,24 +108,24 @@ while True:
 
     areas_stat.clear()
 
-    if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
+    if len(stat_history) >= N_STEPS:  # n_steps x n_items x n_subareas x 2
         n_boxes_history = []
         coords_history = []
         for item_idx, item_iter in enumerate(stat_history[0]):
-                n_box_item_ctxt = []
-                coord_item_ctxt = []
-                for arr_idx, arr in enumerate(item_iter):
-                    arr_n_hist = []
-                    for tmp_st_idx in range(len(stat_history)):
-                        arr_n_hist.append(stat_history[tmp_st_idx][item_idx][arr_idx][0])
-                    msc_n = most_common(arr_n_hist)
-                    idx = 0
-                    while len(stat_history[idx][item_idx][arr_idx][1]) != msc_n:
-                        idx += 1
-                    n_box_item_ctxt.append(msc_n)
-                    coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
-                n_boxes_history.append(n_box_item_ctxt)
-                coords_history.append(coord_item_ctxt)
+            n_box_item_ctxt = []
+            coord_item_ctxt = []
+            for arr_idx, arr in enumerate(item_iter):
+                arr_n_hist = []
+                for tmp_st_idx in range(len(stat_history)):
+                    arr_n_hist.append(stat_history[tmp_st_idx][item_idx][arr_idx][0])
+                msc_n = most_common(arr_n_hist)
+                idx = 0
+                while len(stat_history[idx][item_idx][arr_idx][1]) != msc_n:
+                    idx += 1
+                n_box_item_ctxt.append(msc_n)
+                coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
+            n_boxes_history.append(n_box_item_ctxt)
+            coords_history.append(coord_item_ctxt)
 
         send_report(n_boxes_history, img, areas,
                     folder, logger, server_url, coords_history)

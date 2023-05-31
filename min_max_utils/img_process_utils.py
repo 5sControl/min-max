@@ -24,8 +24,7 @@ def fill_by_content(canvas, image):
 
 
 def letterbox(image, size=(640, 640), color=(114, 114, 114)):
-    place_holder = np.ones(shape=(*size, 3), dtype=np.uint8) * \
-        np.array(color, dtype=np.uint8).reshape(1, 1, 3)
+    place_holder = np.ones(shape=(*size, 3), dtype=np.uint8) * np.array(color, dtype=np.uint8).reshape(1, 1, 3)
     x = fill_by_content(place_holder, image)
     return x
 
@@ -40,10 +39,10 @@ def get_inverse_letterbox_map(region, target_size):
                     a_max=target_size).reshape(2, 2).astype(int)
     shift = lt_rb[0].reshape(1, 1, 2)
     return lambda x: (x - shift) / np.array(size).reshape(1, 1, 2) * np.array(object_size).reshape(1, 1, 2) + \
-        + region[0].reshape(1, 1, 2)
+                     + region[0].reshape(1, 1, 2)
 
 
-def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> list:
+def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> tuple:
     x1, y1, x2, y2 = area_coords
     inverse_map = get_inverse_letterbox_map(
         np.array([[0, 0], (x2 - x1, y2 - y1)]), (640, 640))
@@ -56,17 +55,17 @@ def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple) -> list:
 
 def convert_image(img_, device='cpu'):
     img = letterbox(img_)
-    img = img[:, :, ::-1].transpose(2, 0, 1)  
+    img = img[:, :, ::-1].transpose(2, 0, 1)
     img = np.ascontiguousarray(img)
     img = torch.from_numpy(img).to(device)
     img = img.float()
-    img /= 255.0  
+    img /= 255.0
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
     return img
+
 
 def save_image(img: np.array, name: str):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
     pil_img.save(name, 'PNG', transparency=(10, 10, 10))
-
