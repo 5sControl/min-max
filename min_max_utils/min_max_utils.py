@@ -119,8 +119,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_rect = img.copy()
 
         rectangle_color = (0, 102, 204)
+        is_red_line_in_item = False
 
-        red_lines_in_subareas: list[bool] = [False] * len(item['coords'])
         for subarr_idx, coord in enumerate(item['coords']):
             area_coords = tuple(map(round, coord.values()))
             x1, x2, y1, y2 = area_coords
@@ -131,9 +131,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
             for line in red_lines:
                 if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
                     img_rect = draw_line(img_rect, line, area_coords, thickness=4)
-                    is_red_line_in_subarea = True
+                    is_red_line_in_subarea = is_red_line_in_item = True
 
-            red_lines_in_subareas[subarr_idx] = is_red_line_in_subarea
             text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
             img_rect = draw_rect_with_text(
@@ -161,8 +160,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 "itemId": itemid,
                 "count": sum(n_boxes_history[item_index]),
                 "image_item": image_name_url,
-                "low_stock_level": any(red_lines_in_subareas),
-                "red_lines": red_lines_in_subareas
+                "low_stock_level": is_red_line_in_item,
             }
         )
         if not os.path.exists(folder):
@@ -189,8 +187,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                    str(report_for_send),
                    f'{server_url}:8000/api/reports/report-with-photos/'])
     )
-    with open("req.json", "w") as f:
-        json.dump(report_for_send, f)
+
     try:
         requests.post(
             url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)
