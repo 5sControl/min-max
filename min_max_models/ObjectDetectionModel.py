@@ -219,7 +219,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
     return output
 
 
-class ObjDetectModel:
+class ObjDetectionModel:
     def __init__(self, path: str, device, conf_thresh, iou_thresh, classes) -> None:
         model = attempt_load(path, map_location=device)
         self.stride = int(model.stride.max())

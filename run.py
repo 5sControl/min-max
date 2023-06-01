@@ -1,6 +1,6 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
-from min_max_models.ObjectDetectionModel import ObjDetectModel
+from min_max_models.ObjectDetectionModel import ObjDetectionModel
 from min_max_utils.img_process_utils import convert_image
 import warnings
 import os
@@ -22,14 +22,14 @@ logger = create_logger()
 areas = ast.literal_eval(areas)
 stat_history = []
 
-box_model = ObjDetectModel(
+box_model = ObjDetectionModel(
     BOX_MODEL_PATH,
     DEVICE,
     CONF_THRES,
     IOU_THRES,
     CLASSES
 )
-human_model = ObjDetectModel(
+human_model = ObjDetectionModel(
     HUMAN_MODEL_PATH,
     DEVICE,
     CONF_THRES,

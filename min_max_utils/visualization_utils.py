@@ -3,7 +3,7 @@ import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 
 
-def draw_rect_with_text(img: np.array, rect_coords: [tuple | list], text: str, color, text_color, **rect_kwargs) -> np.array:
+def draw_rect_with_text(img: np.array, rect_coords: list, text: str, color, text_color, **rect_kwargs) -> np.array:
     x1, y1, x2, y2 = list(map(int, rect_coords))
     image = cv2.rectangle(img, (x1, y1), (x2, y2), color, **rect_kwargs)
     if text:
