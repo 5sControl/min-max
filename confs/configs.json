@@ -1,17 +1,16 @@
 {
     "exist_ok": false,
     "name": "exp",
-    "project": "runs/detect",
     "update": false,
     "classes": [
         0
     ],
     "save_conf": false,
     "device": "cpu",
-    "iou_thres": 0.45,
-    "conf_thres": 0.45,
-    "box_detect_model": "min_max_models/min_max_v0.3.7.pt",
+    "iou_thres": 0.5,
+    "conf_thres": 0.5,
+    "box_detect_model": "min_max_models/min_max_v0.3.10.pt",
     "human_detect_model": "min_max_models/min_max_v1.0h.pt",
     "img_size": 640,
-    "n_steps": 3
+    "n_steps": 5
 }

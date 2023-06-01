@@ -1,7 +1,6 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectModel
-from min_max_utils.img_process_utils import convert_image
 import warnings
 import os
 from dotenv import load_dotenv
@@ -40,10 +39,8 @@ human_model = ObjDetectModel(
     CLASSES
 )
 
-stride = box_model.stride
 
-dataset = HTTPLIB2Capture(source, stride=stride,
-                          username=username, password=password)
+dataset = HTTPLIB2Capture(source, username=username, password=password)
 
 is_human_was_detected = True
 n_iters = 0
@@ -57,7 +54,6 @@ while True:
         logger.debug("20 detect iterations passed")
     img_for_human = img.copy()
 
-    img_for_human = convert_image(img_for_human)
     is_human_in_area_now = human_model(img_for_human)[0] != 0
 
     if is_human_in_area_now:
@@ -79,12 +75,11 @@ while True:
                 n_items -= 1
                 drop_area(areas, area_index, item, subarr_idx)
                 continue
-            cropped_img = convert_image(
-                img[
+            cropped_img = img[
                     round(coord['y1']):round(coord['y2']),
                     round(coord['x1']):round(coord['x2'])
                 ]
-            )
+            
             if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
                 stat_history.clear()
                 areas_stat.clear()
@@ -112,8 +107,8 @@ while True:
     areas_stat.clear()
 
     if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
-        n_boxes_history = []
-        coords_history = []
+        n_boxes_per_area = []
+        coords_per_area = []
         for item_idx, item_iter in enumerate(stat_history[0]):
                 n_box_item_ctxt = []
                 coord_item_ctxt = []
@@ -127,9 +122,8 @@ while True:
                         idx += 1
                     n_box_item_ctxt.append(msc_n)
                     coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
-                n_boxes_history.append(n_box_item_ctxt)
-                coords_history.append(coord_item_ctxt)
-
-        send_report(n_boxes_history, img, areas,
-                    folder, logger, server_url, coords_history)
+                n_boxes_per_area.append(n_box_item_ctxt)
+                coords_per_area.append(coord_item_ctxt)
+        send_report(n_boxes_per_area, img, areas,
+                    folder, logger, server_url, coords_per_area)
         stat_history.clear()
