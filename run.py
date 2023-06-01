@@ -107,8 +107,8 @@ while True:
     areas_stat.clear()
 
     if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
-        n_boxes_history = []
-        coords_history = []
+        n_boxes_per_area = []
+        coords_per_area = []
         for item_idx, item_iter in enumerate(stat_history[0]):
                 n_box_item_ctxt = []
                 coord_item_ctxt = []
@@ -122,9 +122,8 @@ while True:
                         idx += 1
                     n_box_item_ctxt.append(msc_n)
                     coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
-                n_boxes_history.append(n_box_item_ctxt)
-                coords_history.append(coord_item_ctxt)
-
-        send_report(n_boxes_history, img, areas,
-                    folder, logger, server_url, coords_history)
+                n_boxes_per_area.append(n_box_item_ctxt)
+                coords_per_area.append(coord_item_ctxt)
+        send_report(n_boxes_per_area, img, areas,
+                    folder, logger, server_url, coords_per_area)
         stat_history.clear()

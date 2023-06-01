@@ -16,8 +16,9 @@ class ObjDetectModel:
             conf=self.conf_thresh,
             iou=self.iou_thresh,
             max_det=300,
-            classes=self.classes
+            classes=self.classes,
+            verbose=False
         )[0].boxes
         n_boxes = len(results)
-        return [n_boxes, results.xyxy.tolist()]
+        return [n_boxes, results.xyxy]
     
