@@ -8,7 +8,7 @@ import numpy as np
 import os
 import requests
 from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
-from min_max_utils.img_process_utils import transfer_coords, save_image
+from min_max_utils.img_process_utils import save_image
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict[list], subarea_idx: int):
@@ -151,8 +151,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 text_color = (0, 225, 128) if idx == len(
                     boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
                 
-                coords = transfer_coords(
-                    bbox_coords[:4], area_coords)
+                coords = bbox_coords[:4]
                 
                 draw_rect_with_text(img_rect, coords, text,
                                     (255, 51, 255), text_color, thickness=2)
