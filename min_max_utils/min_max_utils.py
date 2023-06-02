@@ -9,7 +9,7 @@ import numpy as np
 import os
 import requests
 from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
-from min_max_utils.img_process_utils import transfer_coords, save_image
+from min_max_utils.img_process_utils import save_image, transfer_coords
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict, subarea_idx: int):
@@ -44,11 +44,11 @@ def find_red_line(img):
 
     # lower mask (0-10)
     lower_red = np.array([0, 100, 50])
-    upper_red = np.array([8, 255, 255])
+    upper_red = np.array([4, 255, 255])
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([173, 50, 50])
+    lower_red = np.array([175, 50, 50])
     upper_red = np.array([179, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
@@ -145,14 +145,15 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
             )
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
                 text = str(idx + 1) if idx == 0 or \
-                                       idx == len(boxes_coords[subarr_idx]) - 1 or \
-                                       (idx + 1) % 5 == 0 else ''
-
-                text_color = (0, 225, 128) if idx == len(boxes_coords[subarr_idx]) - 1 else (0, 204, 204)
-
-                coords = transfer_coords(bbox_coords[:4], area_coords)
-
-                draw_rect_with_text(img_rect, coords, text,
+                    idx == len(boxes_coords[item_index][subarr_idx]) - 1 or \
+                    (idx + 1) % 5 == 0 else ''
+                
+                text_color = (0, 225, 128) if idx == len(
+                    boxes_coords[item_index][subarr_idx]) - 1 else (0, 204, 204)
+                
+                bbox_coords = transfer_coords(bbox_coords, area_coords)
+                
+                draw_rect_with_text(img_rect, bbox_coords, text,
                                     (255, 51, 255), text_color, thickness=2)
 
         report.append(

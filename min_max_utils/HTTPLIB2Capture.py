@@ -20,5 +20,5 @@ class HTTPLIB2Capture:
             assert image is not None, 'Image Not Found ' + self.camera_url
             return image
         except Exception as e:
-            print("Data exc - ", e)
+            print("Error while gathering image - ", e)
             return None
