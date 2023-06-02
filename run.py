@@ -1,6 +1,6 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from min_max_utils.min_max_utils import *
-from min_max_models.ObjectDetectionModel import ObjDetectModel
+from min_max_models.ObjectDetectionModel import ObjDetectionModel
 import warnings
 import os
 from dotenv import load_dotenv
