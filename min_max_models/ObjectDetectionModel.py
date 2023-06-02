@@ -2,7 +2,7 @@ from ultralytics import YOLO
 import torch
 
 
-class ObjDetectModel:
+class ObjDetectionModel:
     def __init__(self, path: str, device, conf_thresh, iou_thresh, classes) -> None:
         self.model = YOLO(path)
         self.conf_thresh = conf_thresh

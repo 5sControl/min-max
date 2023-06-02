@@ -15,10 +15,10 @@ class HTTPLIB2Capture:
             self.h.add_credentials(self.username, self.password)
             resp, content = self.h.request(
                 self.camera_url, "GET", body="foobar")
-            nparr = np.frombuffer(content, np.uint8)
-            img0 = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-            assert img0 is not None, 'Image Not Found ' + self.camera_url
-            return img0
+            img_array = np.frombuffer(content, np.uint8)
+            image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            assert image is not None, 'Image Not Found ' + self.camera_url
+            return image
         except Exception as e:
             print("Error while gathering image - ", e)
             return None
