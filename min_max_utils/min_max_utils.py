@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import os
 import requests
-from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
+from min_max_utils.visualization_utils import draw_rect, draw_text, draw_line
 from min_max_utils.img_process_utils import save_image, transfer_coords
 
 
@@ -133,24 +133,19 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                     img_rect = draw_line(img_rect, line, area_coords, thickness=4)
                     is_red_line_in_subarea = is_red_line_in_item = True
 
-            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
+            text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
-            img_rect = draw_rect_with_text(
-                img_rect,
-                area_coords,
-                text,
-                rectangle_color,
-                (255, 255, 255),
-                thickness=2,
-                proba=False
-            )
+            img_rect = draw_rect(img_rect, area_coords, rectangle_color, thickness=2)
+            
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
                 text = str(round(float(bbox_coords[4]), 2))
                 
                 bbox_coords = transfer_coords(bbox_coords[:4], area_coords)
                 
-                img_rect = draw_rect_with_text(img_rect, bbox_coords, text,
-                                    (255, 51, 255), (255, 255, 255), thickness=2, proba=True)
+                img_rect = draw_rect(img_rect, bbox_coords, (255, 51, 255), thickness=2)
+                img_rect = draw_text(img_rect, bbox_coords, text, (255, 255, 255), proba=True)
+
+            img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
 
         report.append(
             {
