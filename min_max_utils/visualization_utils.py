@@ -3,28 +3,29 @@ import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 
 
-def draw_rect_with_text(img: np.array, rect_coords: list, text: str, color, text_color, **rect_kwargs) -> np.array:
+def draw_rect_with_text(img: np.array, rect_coords: list, text: str, color, text_color, proba, **rect_kwargs) -> np.array:
     x1, y1, x2, y2 = list(map(int, rect_coords))
     image = cv2.rectangle(img, (x1, y1), (x2, y2), color, **rect_kwargs)
-    if text:
-        image = draw_text(image, text, coords=(x1 + 15, y1 + 30), text_color=text_color, area_size=x2 - x1)
+    coords = (x1 + 1, y1 + 1) if not proba else (x1 + 1, y2 - 1) 
+    min_font_size = 14 if not proba else 10
+    image = draw_text(image, text, coords=coords, text_color=text_color, area_size=x2 - x1, min_font_size=min_font_size)
     return image
 
 
-def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5) -> ImageFont:
-    font = ImageFont.truetype("fonts/Inter-Bold.ttf", 1)
-    fontsize = 1
+def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5, min_font_size: int = 14) -> ImageFont:
+    font = ImageFont.truetype("fonts/Inter-Bold.ttf", min_font_size)
+    fontsize = min_font_size
     while font.getsize(text)[0] < img_fraction * area_size:
         fontsize += 1
         font = ImageFont.truetype("fonts/Inter-Bold.ttf", fontsize)
     return font
 
 
-def draw_text(img: np.array, text: str, coords: tuple[int, int], text_color: tuple[int, int, int], area_size: int) -> np.array:
+def draw_text(img: np.array, text: str, coords: tuple[int, int], text_color: tuple[int, int, int], area_size: int, min_font_size: bool) -> np.array:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
     draw = ImageDraw.Draw(pil_img)
-    draw.text(coords, text, font=get_scaled_font(text, area_size), fill=text_color)
+    draw.text(coords, text, font=get_scaled_font(text, area_size), fill=text_color, min_font_size=min_font_size)
     # noinspection PyTypeChecker
     img = np.asarray(pil_img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

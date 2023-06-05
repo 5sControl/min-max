@@ -141,20 +141,16 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                 text,
                 rectangle_color,
                 (255, 255, 255),
-                thickness=2
+                thickness=2,
+                proba=False
             )
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                text = str(idx + 1) if idx == 0 or \
-                    idx == len(boxes_coords[item_index][subarr_idx]) - 1 or \
-                    (idx + 1) % 5 == 0 else ''
+                text = str(round(float(bbox_coords[4]), 2))
                 
-                text_color = (0, 225, 128) if idx == len(
-                    boxes_coords[item_index][subarr_idx]) - 1 else (0, 204, 204)
+                bbox_coords = transfer_coords(bbox_coords[:4], area_coords)
                 
-                bbox_coords = transfer_coords(bbox_coords, area_coords)
-                
-                draw_rect_with_text(img_rect, bbox_coords, text,
-                                    (255, 51, 255), text_color, thickness=2)
+                img_rect = draw_rect_with_text(img_rect, bbox_coords, text,
+                                    (255, 51, 255), (255, 255, 255), thickness=2, proba=True)
 
         report.append(
             {
