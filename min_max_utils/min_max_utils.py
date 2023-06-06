@@ -43,12 +43,12 @@ def find_red_line(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # lower mask (0-10)
-    lower_red = np.array([0, 106, 50])
-    upper_red = np.array([7, 255, 255])
+    lower_red = np.array([0, 100, 50])
+    upper_red = np.array([8, 255, 255])
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([173, 50, 50])
+    lower_red = np.array([172, 50, 50])
     upper_red = np.array([179, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
@@ -61,14 +61,16 @@ def find_red_line(img):
     src = cv2.cvtColor(output_img, cv2.COLOR_HSV2RGB)
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
-    dst = cv2.Canny(src, 250, 255, None, 3)
+    img_blur = cv2.GaussianBlur(src, (3,3), 0, 0)
+
+    dst = cv2.Canny(img_blur, 180, 255, None, 3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
                               threshold=55, lines=None, minLineLength=25, maxLineGap=10)
     lines = []
     if lines_p is not None:
         for i in range(0, len(lines_p)):
             line = lines_p[i][0]
-            if abs(line[1] - line[3]) < 200:
+            if abs(line[1] - line[3]) < 100:
                 lines.append(line)
     return lines
 
