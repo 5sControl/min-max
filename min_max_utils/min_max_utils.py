@@ -108,6 +108,19 @@ def most_common(lst):
     data = Counter(lst)
     return max(lst, key=data.get)
 
+def check_box_in_area(box_coord, area_coord):
+    box_center = ((box_coord[0] + box_coord[1]) / 2, (box_coord[2] + box_coord[3]) / 2)
+    if area_coord[0] < box_center[0] < area_coord[2] and area_coord[1] < box_center[1] < area_coord[3]:
+         return True
+    return False
+
+def filter_boxes(area_coord, n_boxes, boxes_coords):
+    result = []
+    for box_coord in boxes_coords:
+        if check_box_in_area(box_coord[:4], area_coord):
+            result.append(box_coord)
+    return [len(result), result]
+
 
 def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
     red_lines = find_red_line(img)
