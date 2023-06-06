@@ -47,8 +47,10 @@ while True:
         logger.warning("Empty image")
         continue
     n_iters += 1
-    if n_iters % 20 == 0:
-        logger.debug("20 detect iterations passed")
+    if n_iters % 60 == 0:
+        is_human_was_detected = True
+        dataset.idx += 1
+        logger.debug("60 detect iterations passed")
     img_for_human = img.copy()
 
     is_human_in_area_now = human_model(img_for_human)[0] != 0

@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import os
 import requests
-from min_max_utils.visualization_utils import draw_rect_with_text, draw_line
+from min_max_utils.visualization_utils import draw_rect, draw_text, draw_line
 from min_max_utils.img_process_utils import save_image, transfer_coords
 
 
@@ -44,11 +44,11 @@ def find_red_line(img):
 
     # lower mask (0-10)
     lower_red = np.array([0, 100, 50])
-    upper_red = np.array([4, 255, 255])
+    upper_red = np.array([8, 255, 255])
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([175, 50, 50])
+    lower_red = np.array([172, 50, 50])
     upper_red = np.array([179, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
@@ -61,14 +61,16 @@ def find_red_line(img):
     src = cv2.cvtColor(output_img, cv2.COLOR_HSV2RGB)
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
-    dst = cv2.Canny(src, 50, 200, None, 3)
+    img_blur = cv2.GaussianBlur(src, (3,3), 0, 0)
+
+    dst = cv2.Canny(img_blur, 180, 255, None, 3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
-                              threshold=61, lines=None, minLineLength=25, maxLineGap=10)
+                              threshold=55, lines=None, minLineLength=25, maxLineGap=10)
     lines = []
     if lines_p is not None:
         for i in range(0, len(lines_p)):
             line = lines_p[i][0]
-            if abs(line[1] - line[3]) < 25:
+            if abs(line[1] - line[3]) < 100:
                 lines.append(line)
     return lines
 
@@ -133,28 +135,19 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                     img_rect = draw_line(img_rect, line, area_coords, thickness=4)
                     is_red_line_in_subarea = is_red_line_in_item = True
 
-            text = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
+            text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
-            img_rect = draw_rect_with_text(
-                img_rect,
-                area_coords,
-                text,
-                rectangle_color,
-                (255, 255, 255),
-                thickness=2
-            )
+            img_rect = draw_rect(img_rect, area_coords, rectangle_color, thickness=2)
+            
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                text = str(idx + 1) if idx == 0 or \
-                    idx == len(boxes_coords[item_index][subarr_idx]) - 1 or \
-                    (idx + 1) % 5 == 0 else ''
+                text = str(round(float(bbox_coords[4]), 2))
                 
-                text_color = (0, 225, 128) if idx == len(
-                    boxes_coords[item_index][subarr_idx]) - 1 else (0, 204, 204)
+                bbox_coords = transfer_coords(bbox_coords[:4], area_coords)
                 
-                bbox_coords = transfer_coords(bbox_coords, area_coords)
-                
-                draw_rect_with_text(img_rect, bbox_coords, text,
-                                    (255, 51, 255), text_color, thickness=2)
+                img_rect = draw_rect(img_rect, bbox_coords, (255, 51, 255), thickness=2)
+                img_rect = draw_text(img_rect, bbox_coords, text, (255, 255, 255), proba=True)
+
+            img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
 
         report.append(
             {
