@@ -6,13 +6,6 @@ on:
       - 'main'
 
 jobs:
-  build:
-    name: Build Docker image
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag 5scontrol/min_max_python:v0.3.11
   push_to_registry:
     name: Push Docker image
     runs-on: ubuntu-latest
@@ -35,5 +28,4 @@ jobs:
           context: .
           file: Dockerfile
           push: True
-          tags: v0.3.11
           
