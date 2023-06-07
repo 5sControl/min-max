@@ -12,11 +12,12 @@ class HTTPLIB2Capture:
 
     def get_snapshot(self):
         try:
-            self.h.add_credentials(self.username, self.password)
-            resp, content = self.h.request(
-                self.camera_url, "GET", body="foobar")
-            img_array = np.frombuffer(content, np.uint8)
-            image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            #self.h.add_credentials(self.username, self.password)
+            #resp, content = self.h.request(
+            #    self.camera_url, "GET", body="foobar")
+            #img_array = np.frombuffer(content, np.uint8)
+            #image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+            image = cv2.imread("snapshot.jpg")
             assert image is not None, 'Image Not Found ' + self.camera_url
             return image
         except Exception as e:
