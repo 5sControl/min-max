@@ -3,11 +3,9 @@ from min_max_utils.min_max_utils import *
 from min_max_models.ObjectDetectionModel import ObjDetectionModel
 import warnings
 import os
-from dotenv import load_dotenv
 from confs.load_configs import *
 import ast
 
-load_dotenv('confs/settings.env')
 warnings.filterwarnings("ignore")
 
 areas = os.environ.get("areas")
@@ -20,6 +18,15 @@ folder = os.environ.get("folder")
 logger = create_logger()
 areas = ast.literal_eval(areas)
 stat_history = []
+area_index = None
+for idx, area in enumerate(areas):
+    if area.get("itemName") == MAIN_ITEM_NAME:
+        area_index = idx
+if area_index is None:
+    logger.critical("{} is not found".format(MAIN_ITEM_NAME))
+    exit(1)
+main_item_coords = list(areas.pop(area_index).get("coords")[0].values())
+main_item_coords = [main_item_coords[0], main_item_coords[2], main_item_coords[1], main_item_coords[3]]
 
 box_model = ObjDetectionModel(
     BOX_MODEL_PATH,
@@ -46,14 +53,20 @@ while True:
     if img is None:
         logger.warning("Empty image")
         continue
+    cropped_img = img[main_item_coords[1]:main_item_coords[3], main_item_coords[0]:main_item_coords[2]]
     n_iters += 1
     if n_iters % 60 == 0:
         is_human_was_detected = True
         dataset.idx += 1
         logger.debug("60 detect iterations passed")
-    img_for_human = img.copy()
 
-    is_human_in_area_now = human_model(img_for_human)[0] != 0
+    is_human_in_area_now = human_model(cropped_img.copy())[0] != 0
+
+    if (is_human_was_detected and not is_human_in_area_now) or \
+        (not is_human_was_detected and not is_human_in_area_now and \
+                    len(stat_history)):
+        logger.debug("Boxes counting...")
+        model_preds = box_model(cropped_img)
 
     if is_human_in_area_now:
         logger.debug("Human was detected")
@@ -74,27 +87,20 @@ while True:
                 n_items -= 1
                 drop_area(areas, area_index, item, subarr_idx)
                 continue
-            cropped_img = img[
-                    round(coord['y1']):round(coord['y2']),
-                    round(coord['x1']):round(coord['x2'])
-                ]
             
-            if is_human_was_detected and is_human_in_area_now:  # wait for human disappearing
+            if is_human_was_detected and is_human_in_area_now:  # wait for human disappear
                 stat_history.clear()
                 areas_stat.clear()
 
-            elif not is_human_was_detected and is_human_in_area_now:  # will start in next iter
+            elif not is_human_was_detected and is_human_in_area_now:  
                 stat_history.clear()
                 areas_stat.clear()
 
-            elif is_human_was_detected and not is_human_in_area_now:  # start counting
-                logger.debug("Boxes counting was started")
-                item_stat.append(box_model(cropped_img))
+            if (is_human_was_detected and not is_human_in_area_now) or\
+                (not is_human_was_detected and not is_human_in_area_now and len(stat_history)) : 
+                filtered_boxes = filter_boxes([x1, y1, x2, y2], main_item_coords, *model_preds)
+                item_stat.append(filtered_boxes)
 
-            elif not is_human_was_detected and not is_human_in_area_now and \
-                    len(stat_history):
-                logger.debug("Boxes counting...")
-                item_stat.append(box_model(cropped_img))
         if item_stat:
             areas_stat.append(item_stat)
 
@@ -124,5 +130,5 @@ while True:
                 n_boxes_per_area.append(n_box_item_ctxt)
                 coords_per_area.append(coord_item_ctxt)
         send_report(n_boxes_per_area, img, areas,
-                    folder, logger, server_url, coords_per_area)
+                    folder, logger, server_url, coords_per_area, main_item_coords)
         stat_history.clear()

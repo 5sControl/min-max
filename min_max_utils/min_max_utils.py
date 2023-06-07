@@ -108,8 +108,22 @@ def most_common(lst):
     data = Counter(lst)
     return max(lst, key=data.get)
 
+def check_box_in_area(box_coord, area_coord):
+    box_center = ((box_coord[0] + box_coord[2]) / 2, (box_coord[1] + box_coord[3]) / 2)
+    if area_coord[0] < box_center[0] < area_coord[2] and area_coord[1] < box_center[1] < area_coord[3]:
+         return True
+    return False
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords):
+def filter_boxes(area_coords, main_item_coords, n_boxes, boxes_coords):
+    result = []
+    for box_coord in boxes_coords:
+        box_coord = transfer_coords(box_coord, area_coords, main_item_coords)
+        if check_box_in_area(box_coord[:4], area_coords):
+            result.append(box_coord)
+    return [len(result), result]
+
+
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, main_item_coords):
     red_lines = find_red_line(img)
     report = []
     for item_index, item in enumerate(areas):
@@ -119,8 +133,9 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
 
         image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
         img_rect = img.copy()
-
         rectangle_color = (0, 102, 204)
+        img_rect = draw_rect(img_rect, main_item_coords, rectangle_color)
+
         is_red_line_in_item = False
 
         for subarr_idx, coord in enumerate(item['coords']):
@@ -142,10 +157,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
                 text = str(round(float(bbox_coords[4]), 2))
                 
-                bbox_coords = transfer_coords(bbox_coords[:4], area_coords)
-                
-                img_rect = draw_rect(img_rect, bbox_coords, (255, 51, 255), thickness=2)
-                img_rect = draw_text(img_rect, bbox_coords, text, (255, 255, 255), proba=True)
+                img_rect = draw_rect(img_rect, bbox_coords[:4], (255, 51, 255), thickness=2)
+                img_rect = draw_text(img_rect, bbox_coords[:4], text, (255, 255, 255), proba=True)
 
             img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
 
