@@ -63,7 +63,7 @@ def find_red_line(img):
 
     img_blur = cv2.GaussianBlur(src, (3,3), 0, 0)
 
-    dst = cv2.Canny(img_blur, 180, 255, None, 3)
+    dst = cv2.Canny(img_blur, 165, 250, None, 3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
                               threshold=55, lines=None, minLineLength=25, maxLineGap=10)
     lines = []
