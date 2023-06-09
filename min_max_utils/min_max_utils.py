@@ -123,11 +123,11 @@ def filter_boxes(area_coords, main_item_coords, n_boxes, boxes_coords):
     return [len(result), result]
 
 def convert_coords_from_dict_to_list(coords: dict) -> list:
-    values = list(coords.values())
+    values = list(map(int, list(coords.values())))
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, main_item_coords):
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, stelag_coords):
     red_lines = find_red_line(img)
     report = []
     for item_index, item in enumerate(areas):
@@ -138,19 +138,18 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
         img_rect = img.copy()
         rectangle_color = (0, 102, 204)
-        img_rect = draw_rect(img_rect, main_item_coords, rectangle_color)
+        for stelag_coord in stelag_coords:
+            img_rect = draw_rect(img_rect, stelag_coord, rectangle_color)
 
         is_red_line_in_item = False
 
         for subarr_idx, coord in enumerate(item['coords']):
-            area_coords = tuple(map(round, coord.values()))
-            x1, x2, y1, y2 = area_coords
-            area_coords = (x1, y1, x2, y2)
+            area_coords = convert_coords_from_dict_to_list(coord)
 
             is_red_line_in_subarea = False
 
             for line in red_lines:
-                if is_line_in_area((coord['x1'], coord['y1'], coord['x2'], coord['y2']), line):
+                if is_line_in_area(area_coords, line):
                     img_rect = draw_line(img_rect, line, area_coords, thickness=4)
                     is_red_line_in_subarea = is_red_line_in_item = True
 

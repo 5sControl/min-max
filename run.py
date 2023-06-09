@@ -1,7 +1,7 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from logging import Logger
 from ultralytics import YOLO
-from min_max_utils.min_max_utils import *
+from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, most_common, send_report
 from confs.load_configs import N_STEPS
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelag_coords: list[list]):
@@ -14,51 +14,50 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
         if img is None:
             logger.warning("Empty image")
             continue
-        cropped_img = img[main_item_coords[1]:main_item_coords[3], main_item_coords[0]:main_item_coords[2]]
+        cropped_imgs = [img[y1:y2, x1:x2] for (x1, y1, x2, y2) in stelag_coords]
         n_iters += 1
         if n_iters % 60 == 0:
             logger.debug("60 detect iterations passed")
 
-        is_human_in_area_now = human_model(cropped_img.copy())[0] != 0
+        is_human_in_area_now = human_model(img.copy())[0] != 0
 
         if (is_human_was_detected and not is_human_in_area_now) or \
             (not is_human_was_detected and not is_human_in_area_now and \
                         len(stat_history)):
             logger.debug("Boxes counting...")
-            model_preds = box_model(cropped_img)
+            model_preds = [box_model(crop_img) for crop_img in cropped_imgs]
 
         if is_human_in_area_now:
             logger.debug("Human was detected")
 
         areas_stat = []
-        n_items = 0
 
         for area_index, item in enumerate(areas.copy()):  # for each area
-            counter = 0
 
-            n_items += len(item['coords'])
             item_stat = []
             for subarr_idx, coord in enumerate(item['coords'].copy()):
-                x1, y1, x2, y2 = list(
-                    map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
-                if x1 == x2 or y1 == y2:
+                area_coord = convert_coords_from_dict_to_list(coord)
+                
+                if area_coord[0] == area_coord[2] or area_coord[1] == area_coord[3]:
                     logger.warning("Empty area")
-                    n_items -= 1
                     drop_area(areas, area_index, item, subarr_idx)
                     continue
                 
-                if is_human_was_detected and is_human_in_area_now:  # wait for human disappear
-                    stat_history.clear()
-                    areas_stat.clear()
-
-                elif not is_human_was_detected and is_human_in_area_now:  
+                if (is_human_was_detected and is_human_in_area_now) or \
+                    (not is_human_was_detected and is_human_in_area_now): 
                     stat_history.clear()
                     areas_stat.clear()
 
                 if (is_human_was_detected and not is_human_in_area_now) or\
-                    (not is_human_was_detected and not is_human_in_area_now and len(stat_history)) : 
-                    filtered_boxes = filter_boxes([x1, y1, x2, y2], main_item_coords, *model_preds)
-                    item_stat.append(filtered_boxes)
+                    (not is_human_was_detected and not is_human_in_area_now and len(stat_history)): 
+                    filtered_boxes = None
+                    for idx, stelag_coord in enumerate(stelag_coords):
+                        if check_box_in_area(area_coord, stelag_coord):
+                            filtered_boxes = filter_boxes(area_coord, stelag_coord, *model_preds[idx])
+                            item_stat.append(filtered_boxes)
+                    if filtered_boxes is None:
+                        logger.critical("Area is not in stelag")
+                        exit(1)
 
             if item_stat:
                 areas_stat.append(item_stat)
@@ -89,5 +88,5 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                     n_boxes_per_area.append(n_box_item_ctxt)
                     coords_per_area.append(coord_item_ctxt)
             send_report(n_boxes_per_area, img, areas,
-                        folder, logger, server_url, coords_per_area, main_item_coords)
+                        folder, logger, server_url, coords_per_area, stelag_coords)
             stat_history.clear()
