@@ -8,7 +8,7 @@ def save_image(img: np.array, name: str):
     pil_img = Image.fromarray(img)
     pil_img.save(name, 'PNG', transparency=(10, 10, 10))
 
-def transfer_coords(prev_coords: torch.Tensor, area_coords: tuple, main_item_coords: tuple) -> list:
+def transfer_coords(prev_coords: torch.Tensor, main_item_coords: tuple) -> list:
     x1_item, y1_item, x2_item, y2_item = main_item_coords
     prev_coords = prev_coords.numpy()
     local_boxes = prev_coords.reshape(-1)

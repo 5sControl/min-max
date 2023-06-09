@@ -1,134 +1,97 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
-from min_max_utils.min_max_utils import *
-from min_max_models.ObjectDetectionModel import ObjDetectionModel
-import warnings
-import os
-from confs.load_configs import *
-import ast
+from logging import Logger
+from ultralytics import YOLO
+from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, most_common, send_report
+from confs.load_configs import N_STEPS
 
-warnings.filterwarnings("ignore")
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelag_coords: list):
+    stat_history = []
+    is_human_was_detected = True
+    n_iters = 0
 
-areas = os.environ.get("areas")
-username = os.environ.get("username")
-password = os.environ.get("password")
-server_url = os.environ.get("server_url")
-source = os.environ.get("camera_url")
-folder = os.environ.get("folder")
+    while True:
+        img = dataset.get_snapshot()
+        if img is None:
+            logger.warning("Empty image")
+            continue
+        n_iters += 1
+        if n_iters % 60 == 0:
+            logger.debug("60 detect iterations passed")
 
-logger = create_logger()
-areas = ast.literal_eval(areas)
-stat_history = []
-area_index = None
-for idx, area in enumerate(areas):
-    if area.get("itemName") == MAIN_ITEM_NAME:
-        area_index = idx
-if area_index is None:
-    logger.critical("{} is not found".format(MAIN_ITEM_NAME))
-    exit(1)
-main_item_coords = list(areas.pop(area_index).get("coords")[0].values())
-main_item_coords = [main_item_coords[0], main_item_coords[2], main_item_coords[1], main_item_coords[3]]
+        is_human_in_area_now = human_model(img.copy())[0] != 0
 
-box_model = ObjDetectionModel(
-    BOX_MODEL_PATH,
-    DEVICE,
-    CONF_THRES,
-    IOU_THRES,
-    CLASSES
-)
-human_model = ObjDetectionModel(
-    HUMAN_MODEL_PATH,
-    DEVICE,
-    CONF_THRES,
-    IOU_THRES,
-    CLASSES
-)
+        if (is_human_was_detected and not is_human_in_area_now) or \
+            (not is_human_was_detected and not is_human_in_area_now and \
+                        len(stat_history)):
+            logger.debug("Boxes counting...")
+            if stelag_coords:
+                cropped_imgs = [img[y1:y2, x1:x2] for (x1, y1, x2, y2) in stelag_coords]
+                model_preds = [box_model(crop_img) for crop_img in cropped_imgs]
 
+        if is_human_in_area_now:
+            logger.debug("Human was detected")
 
-dataset = HTTPLIB2Capture(source, username=username, password=password)
+        areas_stat = []
 
-is_human_was_detected = True
-n_iters = 0
-while True:
-    img = dataset.get_snapshot()
-    if img is None:
-        logger.warning("Empty image")
-        continue
-    cropped_img = img[main_item_coords[1]:main_item_coords[3], main_item_coords[0]:main_item_coords[2]]
-    n_iters += 1
-    if n_iters % 60 == 0:
-        is_human_was_detected = True
-        dataset.idx += 1
-        logger.debug("60 detect iterations passed")
+        for area_index, item in enumerate(areas.copy()):  # for each area
 
-    is_human_in_area_now = human_model(cropped_img.copy())[0] != 0
+            item_stat = []
+            for subarr_idx, coord in enumerate(item['coords'].copy()):
+                area_coord = convert_coords_from_dict_to_list(coord)
+                
+                if area_coord[0] == area_coord[2] or area_coord[1] == area_coord[3]:
+                    logger.warning("Empty area")
+                    drop_area(areas, area_index, item, subarr_idx)
+                    continue
+                
+                if (is_human_was_detected and is_human_in_area_now) or \
+                    (not is_human_was_detected and is_human_in_area_now): 
+                    stat_history.clear()
+                    areas_stat.clear()
 
-    if (is_human_was_detected and not is_human_in_area_now) or \
-        (not is_human_was_detected and not is_human_in_area_now and \
-                    len(stat_history)):
-        logger.debug("Boxes counting...")
-        model_preds = box_model(cropped_img)
+                if (is_human_was_detected and not is_human_in_area_now) or\
+                    (not is_human_was_detected and not is_human_in_area_now and len(stat_history)):
+                    boxes_preds = None 
+                    if stelag_coords:
+                        for idx, stelag_coord in enumerate(stelag_coords):
+                            if check_box_in_area(area_coord, stelag_coord):
+                                boxes_preds = filter_boxes(stelag_coord, *model_preds[idx], area_coord)
+                                break
+                        if boxes_preds is None:
+                            logger.critical("Area is not in stelag")
+                            exit(1)
+                    else:
+                        model_preds = box_model(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
+                        boxes_preds = filter_boxes(area_coord, *model_preds, check=False)
+                    item_stat.append(boxes_preds)
+            if item_stat:
+                areas_stat.append(item_stat)
 
-    if is_human_in_area_now:
-        logger.debug("Human was detected")
+        is_human_was_detected = is_human_in_area_now
 
-    areas_stat = []
-    n_items = 0
+        if len(areas_stat) >= len(areas):
+            stat_history.append(areas_stat.copy())
 
-    for area_index, item in enumerate(areas.copy()):  # for each area
-        counter = 0
+        areas_stat.clear()
 
-        n_items += len(item['coords'])
-        item_stat = []
-        for subarr_idx, coord in enumerate(item['coords'].copy()):
-            x1, y1, x2, y2 = list(
-                map(round, (coord['x1'], coord['y1'], coord['x2'], coord['y2'])))
-            if x1 == x2 or y1 == y2:
-                logger.warning("Empty area")
-                n_items -= 1
-                drop_area(areas, area_index, item, subarr_idx)
-                continue
-            
-            if is_human_was_detected and is_human_in_area_now:  # wait for human disappear
-                stat_history.clear()
-                areas_stat.clear()
-
-            elif not is_human_was_detected and is_human_in_area_now:  
-                stat_history.clear()
-                areas_stat.clear()
-
-            if (is_human_was_detected and not is_human_in_area_now) or\
-                (not is_human_was_detected and not is_human_in_area_now and len(stat_history)) : 
-                filtered_boxes = filter_boxes([x1, y1, x2, y2], main_item_coords, *model_preds)
-                item_stat.append(filtered_boxes)
-
-        if item_stat:
-            areas_stat.append(item_stat)
-
-    is_human_was_detected = is_human_in_area_now
-
-    if len(areas_stat) >= len(areas):
-        stat_history.append(areas_stat.copy())
-
-    areas_stat.clear()
-
-    if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
-        n_boxes_per_area = []
-        coords_per_area = []
-        for item_idx, item_iter in enumerate(stat_history[0]):
-                n_box_item_ctxt = []
-                coord_item_ctxt = []
-                for arr_idx, arr in enumerate(item_iter):
-                    arr_n_hist = []
-                    for tmp_st_idx in range(len(stat_history)):
-                        arr_n_hist.append(stat_history[tmp_st_idx][item_idx][arr_idx][0])
-                    msc_n = most_common(arr_n_hist)
-                    idx = 0
-                    while len(stat_history[idx][item_idx][arr_idx][1]) != msc_n:
-                        idx += 1
-                    n_box_item_ctxt.append(msc_n)
-                    coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
-                n_boxes_per_area.append(n_box_item_ctxt)
-                coords_per_area.append(coord_item_ctxt)
-        send_report(n_boxes_per_area, img, areas,
-                    folder, logger, server_url, coords_per_area, main_item_coords)
-        stat_history.clear()
+        if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
+            n_boxes_per_area = []
+            coords_per_area = []
+            for item_idx, item_iter in enumerate(stat_history[0]):
+                    n_box_item_ctxt = []
+                    coord_item_ctxt = []
+                    for arr_idx, arr in enumerate(item_iter):
+                        arr_n_hist = []
+                        for tmp_st_idx in range(len(stat_history)):
+                            arr_n_hist.append(stat_history[tmp_st_idx][item_idx][arr_idx][0])
+                        msc_n = most_common(arr_n_hist)
+                        idx = 0
+                        while len(stat_history[idx][item_idx][arr_idx][1]) != msc_n:
+                            idx += 1
+                        n_box_item_ctxt.append(msc_n)
+                        coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
+                    n_boxes_per_area.append(n_box_item_ctxt)
+                    coords_per_area.append(coord_item_ctxt)
+            send_report(n_boxes_per_area, img, areas,
+                        folder, logger, server_url, coords_per_area, stelag_coords)
+            stat_history.clear()
