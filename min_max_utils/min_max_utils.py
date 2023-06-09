@@ -122,6 +122,10 @@ def filter_boxes(area_coords, main_item_coords, n_boxes, boxes_coords):
             result.append(box_coord)
     return [len(result), result]
 
+def convert_coords_from_dict_to_list(coords: dict) -> list:
+    values = list(coords.values())
+    assert len(values) == 4
+    return [values[0], values[2], values[1], values[3]]
 
 def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, main_item_coords):
     red_lines = find_red_line(img)

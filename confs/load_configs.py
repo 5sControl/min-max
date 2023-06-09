@@ -12,4 +12,3 @@ with open("confs/configs.json", "r") as conf:
     DEVICE = select_device(configs.get("device"))
     IMG_SIZE = configs.get("img_size")
     N_STEPS = configs.get("n_steps")
-    MAIN_ITEM_NAME = configs.get("main_item_name")
