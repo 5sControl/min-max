@@ -114,11 +114,13 @@ def check_box_in_area(box_coord, area_coord):
          return True
     return False
 
-def filter_boxes(area_coords, main_item_coords, n_boxes, boxes_coords):
+def filter_boxes(main_item_coords, n_boxes, boxes_coords, area_coords=None, check=True):
     result = []
     for box_coord in boxes_coords:
-        box_coord = transfer_coords(box_coord, area_coords, main_item_coords)
-        if check_box_in_area(box_coord[:4], area_coords):
+        box_coord = transfer_coords(box_coord, main_item_coords)
+        if not check:
+            result.append(box_coord)
+        elif check and check_box_in_area(box_coord[:4], area_coords):
             result.append(box_coord)
     return [len(result), result]
 

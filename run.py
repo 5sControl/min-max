@@ -4,7 +4,7 @@ from ultralytics import YOLO
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, most_common, send_report
 from confs.load_configs import N_STEPS
 
-def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelag_coords: list[list]):
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelag_coords: list):
     stat_history = []
     is_human_was_detected = True
     n_iters = 0
@@ -14,7 +14,6 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
         if img is None:
             logger.warning("Empty image")
             continue
-        cropped_imgs = [img[y1:y2, x1:x2] for (x1, y1, x2, y2) in stelag_coords]
         n_iters += 1
         if n_iters % 60 == 0:
             logger.debug("60 detect iterations passed")
@@ -25,7 +24,9 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
             (not is_human_was_detected and not is_human_in_area_now and \
                         len(stat_history)):
             logger.debug("Boxes counting...")
-            model_preds = [box_model(crop_img) for crop_img in cropped_imgs]
+            if stelag_coords:
+                cropped_imgs = [img[y1:y2, x1:x2] for (x1, y1, x2, y2) in stelag_coords]
+                model_preds = [box_model(crop_img) for crop_img in cropped_imgs]
 
         if is_human_in_area_now:
             logger.debug("Human was detected")
@@ -49,16 +50,20 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                     areas_stat.clear()
 
                 if (is_human_was_detected and not is_human_in_area_now) or\
-                    (not is_human_was_detected and not is_human_in_area_now and len(stat_history)): 
-                    filtered_boxes = None
-                    for idx, stelag_coord in enumerate(stelag_coords):
-                        if check_box_in_area(area_coord, stelag_coord):
-                            filtered_boxes = filter_boxes(area_coord, stelag_coord, *model_preds[idx])
-                            item_stat.append(filtered_boxes)
-                    if filtered_boxes is None:
-                        logger.critical("Area is not in stelag")
-                        exit(1)
-
+                    (not is_human_was_detected and not is_human_in_area_now and len(stat_history)):
+                    boxes_preds = None 
+                    if stelag_coords:
+                        for idx, stelag_coord in enumerate(stelag_coords):
+                            if check_box_in_area(area_coord, stelag_coord):
+                                boxes_preds = filter_boxes(stelag_coord, *model_preds[idx], area_coord)
+                                break
+                        if boxes_preds is None:
+                            logger.critical("Area is not in stelag")
+                            exit(1)
+                    else:
+                        model_preds = box_model(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
+                        boxes_preds = filter_boxes(area_coord, *model_preds, check=False)
+                    item_stat.append(boxes_preds)
             if item_stat:
                 areas_stat.append(item_stat)
 
