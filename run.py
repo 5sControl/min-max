@@ -4,7 +4,7 @@ from ultralytics import YOLO
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, most_common, send_report
 from confs.load_configs import N_STEPS
 
-def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelag_coords: list):
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas:list[dict], folder: str, server_url: str, stelags: list):
     stat_history = []
     is_human_was_detected = True
     n_iters = 0
@@ -24,8 +24,11 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
             (not is_human_was_detected and not is_human_in_area_now and \
                         len(stat_history)):
             logger.debug("Boxes counting...")
-            if stelag_coords:
-                cropped_imgs = [img[y1:y2, x1:x2] for (x1, y1, x2, y2) in stelag_coords]
+            if stelags:
+                cropped_imgs = []
+                for stelag in stelags:
+                    x1, x2, y1, y2 = tuple(stelag.get("coords").values())
+                    cropped_imgs.append(img[y1:y2, x1:x2])
                 model_preds = [box_model(crop_img) for crop_img in cropped_imgs]
 
         if is_human_in_area_now:
@@ -33,7 +36,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
 
         areas_stat = []
 
-        for area_index, item in enumerate(areas.copy()):  # for each area
+        for area_index, item in enumerate(areas.copy()): 
 
             item_stat = []
             for subarr_idx, coord in enumerate(item['coords'].copy()):
@@ -52,10 +55,12 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                 if (is_human_was_detected and not is_human_in_area_now) or\
                     (not is_human_was_detected and not is_human_in_area_now and len(stat_history)):
                     boxes_preds = None 
-                    if stelag_coords:
-                        for idx, stelag_coord in enumerate(stelag_coords):
-                            if check_box_in_area(area_coord, stelag_coord):
-                                boxes_preds = filter_boxes(stelag_coord, *model_preds[idx], area_coord)
+                    if stelags:
+                        for idx, stelag in enumerate(stelags):
+                            stelag_coords = convert_coords_from_dict_to_list(stelag.get("coords"))
+                            if check_box_in_area(area_coord, stelag_coords):
+                                boxes_preds = filter_boxes(stelag_coords, *model_preds[idx], area_coord)
+                                item["zoneId"] = stelag.get("zoneId")
                                 break
                         if boxes_preds is None:
                             logger.critical("Area is not in stelag")
@@ -74,7 +79,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
 
         areas_stat.clear()
 
-        if len(stat_history) >= N_STEPS:   # n_steps x n_items x n_subarrs x 2
+        if len(stat_history) >= N_STEPS:  
             n_boxes_per_area = []
             coords_per_area = []
             for item_idx, item_iter in enumerate(stat_history[0]):
@@ -93,5 +98,5 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                     n_boxes_per_area.append(n_box_item_ctxt)
                     coords_per_area.append(coord_item_ctxt)
             send_report(n_boxes_per_area, img, areas,
-                        folder, logger, server_url, coords_per_area, stelag_coords)
+                        folder, logger, server_url, coords_per_area, stelags)
             stat_history.clear()

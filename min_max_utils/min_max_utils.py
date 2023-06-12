@@ -110,11 +110,11 @@ def most_common(lst):
 
 def check_box_in_area(box_coord, area_coord):
     box_center = ((box_coord[0] + box_coord[2]) / 2, (box_coord[1] + box_coord[3]) / 2)
-    if area_coord[0] < box_center[0] < area_coord[2] and area_coord[1] < box_center[1] < area_coord[3]:
+    if area_coord[0] < box_center[0] <= area_coord[2] and area_coord[1] < box_center[1] <= area_coord[3]:
          return True
     return False
 
-def filter_boxes(main_item_coords, n_boxes, boxes_coords, area_coords=None, check=True):
+def filter_boxes(main_item_coords, _, boxes_coords, area_coords=None, check=True):
     result = []
     for box_coord in boxes_coords:
         box_coord = transfer_coords(box_coord, main_item_coords)
@@ -129,9 +129,32 @@ def convert_coords_from_dict_to_list(coords: dict) -> list:
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, stelag_coords):
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, stelags):
     red_lines = find_red_line(img)
     report = []
+    if not stelags:
+        for item in areas:
+            item['zoneId'] = 1
+        stelags.append(
+            {
+                "zoneId": None,
+                "zoneName": "all_image",
+                "coords":                 
+                {
+                    "x1": 0,
+                    "x2": 1920,
+                    "y1": 0,
+                    "y2": 1080
+                },
+                "items": []
+            }
+        )
+    for stelag in stelags:
+        stelag_dict = {}
+        stelag_dict['zoneId'] = stelag['zoneId']
+        stelag_dict['zoneName'] = stelag['zoneName']
+        stelag_dict['items'] = []
+        report.append(stelag_dict)
     for item_index, item in enumerate(areas):
         itemid = item['itemId']
 
@@ -140,8 +163,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
         img_rect = img.copy()
         rectangle_color = (0, 102, 204)
-        for stelag_coord in stelag_coords:
-            img_rect = draw_rect(img_rect, stelag_coord, rectangle_color)
+        for stelag in stelags:
+            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(stelag.get("coords")), rectangle_color)
 
         is_red_line_in_item = False
 
@@ -167,21 +190,20 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
 
             img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
 
-        report.append(
-            {
-                "itemId": itemid,
-                "count": sum(n_boxes_history[item_index]),
-                "image_item": image_name_url,
-                "low_stock_level": is_red_line_in_item,
-            }
-        )
+        for idx, stelag in enumerate(stelags):
+            if stelag.get("zoneId") == item.get("zoneId"):
+                report[idx]['items'].append(
+                    {
+                        "itemId": itemid,
+                        "count": sum(n_boxes_history[item_index]),
+                        "image_item": image_name_url,
+                        "low_stock_level": is_red_line_in_item,
+                    }
+                )
         if not os.path.exists(folder):
             os.makedirs(folder)
         save_image(img_rect, image_name_url)
-    save_photo_url = folder + '/' + str(uuid.uuid4()) + '.jpg'
-    save_image(img, save_photo_url)
     photo_start = {
-        'url': save_photo_url,
         'date': datetime.datetime.now()
     }
     report_for_send = {
@@ -189,7 +211,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         'algorithm': "min_max_control",
         'start_tracking': str(photo_start['date']),
         'stop_tracking': str(photo_start['date']),
-        'photos': [{'image': str(photo_start['url']), 'date': str(photo_start['date'])}],
+        'photos': [{'date': str(photo_start['date'])}],
         'violation_found': False,
         'extra': report
     }
