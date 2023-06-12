@@ -4,9 +4,11 @@ from min_max_models.ObjectDetectionModel import ObjDetectionModel
 import warnings
 import os
 from run import run_min_max
+from dotenv import load_dotenv
 from confs.load_configs import *
 import ast
 
+load_dotenv("confs/settings.env")
 warnings.filterwarnings("ignore")
 
 areas = os.environ.get("areas")
@@ -19,23 +21,19 @@ stelags = os.environ.get("stelag")
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
-if stelags is not None:
-    stelags = ast.literal_eval(stelags)
-else:
-    logger.warning("stelag is not found")
+stelags = ast.literal_eval(stelags)
+
 
 
 
 box_model = ObjDetectionModel(
     BOX_MODEL_PATH,
-    DEVICE,
     CONF_THRES,
     IOU_THRES,
     CLASSES
 )
 human_model = ObjDetectionModel(
     HUMAN_MODEL_PATH,
-    DEVICE,
     CONF_THRES,
     IOU_THRES,
     CLASSES
@@ -43,5 +41,4 @@ human_model = ObjDetectionModel(
 
 dataset = HTTPLIB2Capture(source, username=username, password=password)
 
-stelags = list(map(convert_coords_from_dict_to_list, stelags)) if stelags is not None else []
 run_min_max(dataset, logger, human_model, box_model, areas, folder, server_url, stelags)
