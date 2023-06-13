@@ -15,7 +15,6 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
     while True:
         img = dataset.get_snapshot()
         if img is None:
-            logger.warning("Empty image")
             continue
         n_iters += 1
         if n_iters % 60 == 0:

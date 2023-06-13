@@ -9,16 +9,18 @@ class HTTPLIB2Capture:
         self.camera_url = path
         self.username = kwargs.get('username', None)
         self.password = kwargs.get('password', None)
+        self.logger = kwargs.get('logger')
+        if self.username is None or self.password is None:
+            self.logger.warning("Empty password or username")
 
     def get_snapshot(self):
+        self.h.add_credentials(self.username, self.password)
         try:
-            self.h.add_credentials(self.username, self.password)
             resp, content = self.h.request(
                 self.camera_url, "GET", body="foobar")
             img_array = np.frombuffer(content, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-            assert image is not None, 'Image Not Found ' + self.camera_url
             return image
-        except Exception as e:
-            print("Error while gathering image - ", e)
+        except Exception:
+            self.logger.warning("Empty image. Skipping iteration...")
             return None
