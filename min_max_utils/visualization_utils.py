@@ -8,13 +8,16 @@ def draw_rect(img, rect_coords, color, **rect_kwargs):
     image = cv2.rectangle(img, (x1, y1), (x2, y2), color, **rect_kwargs)
     return image
 
+
 def draw_text(img, rect_coords: list, text: str, text_color, proba):
     x1, y1, x2, y2 = list(map(int, rect_coords))
-    coords = (x1 + 1, y1 + 1) if not proba else (x1 + 1, y2 - 5) 
+    coords = (x1 + 1, y1 + 1) if not proba else (x1 + 1, y2 - 5)
     min_font_size = 14 if not proba else 8
     img_fraction = 0.5 if not proba else 0.2
-    image = draw_text_util(img, text, coords=coords, text_color=text_color, area_size=x2 - x1, min_font_size=min_font_size, fraction=img_fraction)
+    image = draw_text_util(img, text, coords=coords, text_color=text_color, area_size=x2 - x1,
+                           min_font_size=min_font_size, fraction=img_fraction)
     return image
+
 
 def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5, min_font_size: int = 14) -> ImageFont:
     font = ImageFont.truetype("fonts/Inter-Bold.ttf", min_font_size)
@@ -25,11 +28,13 @@ def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5, min_fo
     return font
 
 
-def draw_text_util(img: np.array, text: str, coords: tuple[int, int], text_color: tuple[int, int, int], area_size: int, min_font_size: bool, fraction: float = 0.5) -> np.array:
+def draw_text_util(img: np.array, text: str, coords: tuple[int, int], text_color: tuple[int, int, int], area_size: int,
+                   min_font_size: int, fraction: float = 0.5) -> np.array:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
     draw = ImageDraw.Draw(pil_img)
-    draw.text(coords, text, font=get_scaled_font(text, area_size, fraction), fill=text_color, min_font_size=min_font_size)
+    draw.text(coords, text, font=get_scaled_font(text, area_size, fraction), fill=text_color,
+              min_font_size=min_font_size)
     # noinspection PyTypeChecker
     img = np.asarray(pil_img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

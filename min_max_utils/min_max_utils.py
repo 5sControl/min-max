@@ -43,8 +43,8 @@ def find_red_line(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # lower mask (0-10)
-    lower_red = np.array([0, 100, 50])
-    upper_red = np.array([8, 255, 255])
+    lower_red = np.array([0, 135, 50])
+    upper_red = np.array([7, 255, 255])
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
@@ -61,11 +61,9 @@ def find_red_line(img):
     src = cv2.cvtColor(output_img, cv2.COLOR_HSV2RGB)
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
-    img_blur = cv2.GaussianBlur(src, (3,3), 0, 0)
-
-    dst = cv2.Canny(img_blur, 165, 250, None, 3)
+    dst = cv2.Canny(src, 150, 250, None, 3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
-                              threshold=55, lines=None, minLineLength=25, maxLineGap=10)
+                              threshold=50, lines=None, minLineLength=15, maxLineGap=10)
     lines = []
     if lines_p is not None:
         for i in range(0, len(lines_p)):
@@ -108,11 +106,13 @@ def most_common(lst):
     data = Counter(lst)
     return max(lst, key=data.get)
 
+
 def check_box_in_area(box_coord, area_coord):
     box_center = ((box_coord[0] + box_coord[2]) / 2, (box_coord[1] + box_coord[3]) / 2)
     if area_coord[0] < box_center[0] <= area_coord[2] and area_coord[1] < box_center[1] <= area_coord[3]:
-         return True
+        return True
     return False
+
 
 def filter_boxes(main_item_coords, _, boxes_coords, area_coords=None, check=True):
     result = []
@@ -124,37 +124,36 @@ def filter_boxes(main_item_coords, _, boxes_coords, area_coords=None, check=True
             result.append(box_coord)
     return [len(result), result]
 
+
 def convert_coords_from_dict_to_list(coords: dict) -> list:
     values = list(map(int, list(coords.values())))
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
 
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, stelags):
+
+def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, zones):
     red_lines = find_red_line(img)
     report = []
-    if not stelags:
+    if not zones:
         for item in areas:
             item['zoneId'] = 1
-        stelags.append(
+        zones.append(
             {
                 "zoneId": None,
                 "zoneName": "all_image",
-                "coords":                 
-                {
-                    "x1": 0,
-                    "x2": 1920,
-                    "y1": 0,
-                    "y2": 1080
-                },
+                "coords":
+                    {
+                        "x1": 0,
+                        "x2": 1920,
+                        "y1": 0,
+                        "y2": 1080
+                    },
                 "items": []
             }
         )
-    for stelag in stelags:
-        stelag_dict = {}
-        stelag_dict['zoneId'] = stelag['zoneId']
-        stelag_dict['zoneName'] = stelag['zoneName']
-        stelag_dict['items'] = []
-        report.append(stelag_dict)
+    for zone in zones:
+        zone_dict = {'zoneId': zone['zoneId'], 'zoneName': zone['zoneName'], 'items': []}
+        report.append(zone_dict)
     for item_index, item in enumerate(areas):
         itemid = item['itemId']
 
@@ -163,8 +162,8 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
         img_rect = img.copy()
         rectangle_color = (0, 102, 204)
-        for stelag in stelags:
-            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(stelag.get("coords")), rectangle_color)
+        for zone in zones:
+            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")), rectangle_color)
 
         is_red_line_in_item = False
 
@@ -181,17 +180,17 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
             text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
             img_rect = draw_rect(img_rect, area_coords, rectangle_color, thickness=2)
-            
+
             for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
                 text = str(round(float(bbox_coords[4]), 2))
-                
+
                 img_rect = draw_rect(img_rect, bbox_coords[:4], (255, 51, 255), thickness=2)
                 img_rect = draw_text(img_rect, bbox_coords[:4], text, (255, 255, 255), proba=True)
 
             img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
 
-        for idx, stelag in enumerate(stelags):
-            if stelag.get("zoneId") == item.get("zoneId"):
+        for idx, zone in enumerate(zones):
+            if zone.get("zoneId") == item.get("zoneId"):
                 report[idx]['items'].append(
                     {
                         "itemId": itemid,

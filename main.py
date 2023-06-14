@@ -16,13 +16,11 @@ password = os.environ.get("password")
 server_url = os.environ.get("server_url")
 source = os.environ.get("camera_url")
 folder = os.environ.get("folder")
-stelags = os.environ.get("stelag")
+zones = os.environ.get("zones")
 
 logger = create_logger()
 areas = ast.literal_eval(areas)
-stelags = ast.literal_eval(stelags)
-
-
+zones = ast.literal_eval(zones)
 
 
 box_model = ObjDetectionModel(
@@ -38,6 +36,6 @@ human_model = ObjDetectionModel(
     CLASSES
 )
 
-dataset = HTTPLIB2Capture(source, username=username, password=password)
+dataset = HTTPLIB2Capture(source, username=username, password=password, logger=logger)
 
-run_min_max(dataset, logger, human_model, box_model, areas, folder, server_url, stelags)
+run_min_max(dataset, logger, human_model, box_model, areas, folder, server_url, zones)
