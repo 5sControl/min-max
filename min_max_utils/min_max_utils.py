@@ -48,8 +48,8 @@ def find_red_line(img):
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([172, 50, 50])
-    upper_red = np.array([179, 255, 255])
+    lower_red = np.array([170, 70, 50])
+    upper_red = np.array([180, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # join my masks
@@ -136,18 +136,18 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
     report = []
     if not zones:
         for item in areas:
-            item['zoneId'] = 1
+            item['zoneId'] = None
         zones.append(
             {
                 "zoneId": None,
-                "zoneName": "all_image",
+                "zoneName": None,
                 "coords":
-                    {
+                    [{
                         "x1": 0,
                         "x2": 1920,
                         "y1": 0,
                         "y2": 1080
-                    },
+                }],
                 "items": []
             }
         )
@@ -163,7 +163,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_rect = img.copy()
         rectangle_color = (0, 102, 204)
         for zone in zones:
-            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")), rectangle_color)
+            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")[0]), rectangle_color)
 
         is_red_line_in_item = False
 
@@ -195,8 +195,10 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                     {
                         "itemId": itemid,
                         "count": sum(n_boxes_history[item_index]),
-                        "image_item": image_name_url,
+                        "image": image_name_url,
                         "low_stock_level": is_red_line_in_item,
+                        "zoneId": item.get("zoneId"),
+                        "zoneName": zone.get("zoneName")
                     }
                 )
         if not os.path.exists(folder):

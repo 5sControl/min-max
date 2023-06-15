@@ -29,7 +29,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
             if zones:
                 cropped_images = []
                 for zone in zones:
-                    x1, x2, y1, y2 = tuple(zone.get("coords").values())
+                    x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])
                 model_preds = [box_model(crop_img) for crop_img in cropped_images]
 
@@ -59,7 +59,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                     boxes_preds = None
                     if zones:
                         for idx, zone in enumerate(zones):
-                            zone_coords = convert_coords_from_dict_to_list(zone.get("coords"))
+                            zone_coords = convert_coords_from_dict_to_list(zone.get("coords")[0])
                             if check_box_in_area(area_coord, zone_coords):
                                 boxes_preds = filter_boxes(zone_coords, *model_preds[idx], area_coord)
                                 item["zoneId"] = zone.get("zoneId")
