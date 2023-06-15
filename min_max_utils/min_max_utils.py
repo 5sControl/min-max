@@ -136,18 +136,18 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
     report = []
     if not zones:
         for item in areas:
-            item['zoneId'] = 1
+            item['zoneId'] = None
         zones.append(
             {
                 "zoneId": None,
-                "zoneName": "all_image",
+                "zoneName": None,
                 "coords":
-                    {
+                    [{
                         "x1": 0,
                         "x2": 1920,
                         "y1": 0,
                         "y2": 1080
-                    },
+                }],
                 "items": []
             }
         )
@@ -195,7 +195,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                     {
                         "itemId": itemid,
                         "count": sum(n_boxes_history[item_index]),
-                        "image_item": image_name_url,
+                        "image": image_name_url,
                         "low_stock_level": is_red_line_in_item,
                     }
                 )
