@@ -21,7 +21,6 @@
 *.cfg
 !setup.cfg
 !cfg/yolov3*.cfg
-*.pt
 .vscode/
 *.env           
 test.py
