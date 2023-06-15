@@ -48,8 +48,8 @@ def find_red_line(img):
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([172, 50, 50])
-    upper_red = np.array([179, 255, 255])
+    lower_red = np.array([170, 70, 50])
+    upper_red = np.array([180, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # join my masks
