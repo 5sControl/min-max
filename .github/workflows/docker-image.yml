@@ -1,0 +1,31 @@
+name: Push Docker image
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  push_to_registry:
+    name: Push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: 5scontrol
+          password: dckr_pat_JeDvLRwvs54o_E4iwZtPtCE45iI
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with: 
+          images: 5scontrol/min_max_python
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Dockerfile
+          push: True
+          tags: 5scontrol/min_max_python:v0.3.12

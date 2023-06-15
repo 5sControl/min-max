@@ -163,7 +163,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
         img_rect = img.copy()
         rectangle_color = (0, 102, 204)
         for zone in zones:
-            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")), rectangle_color)
+            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")[0]), rectangle_color)
 
         is_red_line_in_item = False
 
