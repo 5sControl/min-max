@@ -195,7 +195,7 @@ def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_c
                     {
                         "itemId": itemid,
                         "count": sum(n_boxes_history[item_index]),
-                        "image": image_name_url,
+                        "image_item": image_name_url,
                         "low_stock_level": is_red_line_in_item,
                         "zoneId": item.get("zoneId"),
                         "zoneName": zone.get("zoneName")
