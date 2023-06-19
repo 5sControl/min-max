@@ -2,15 +2,17 @@ from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from logging import Logger
 from ultralytics import YOLO
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
-    most_common, send_report
+    most_common
 from confs.load_configs import N_STEPS
+from min_max_utils.MinMaxReporter import Reporter
 
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas: list[dict],
-                folder: str, server_url: str, zones: list):
+                folder: str, debug_folder: str, server_url: str, zones: list):
     stat_history = []
     is_human_was_detected = True
     n_iters = 0
+    reporter = Reporter(logger, server_url, folder, debug_folder)
 
     while True:
         img = dataset.get_snapshot()
@@ -99,6 +101,5 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                     coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
                 n_boxes_per_area.append(n_box_item_ctxt)
                 coords_per_area.append(coord_item_ctxt)
-            send_report(n_boxes_per_area, img, areas,
-                        folder, logger, server_url, coords_per_area, zones)
+            reporter.send_report_to_server(reporter.create_report(n_boxes_per_area, img, areas, coords_per_area, zones))
             stat_history.clear()
