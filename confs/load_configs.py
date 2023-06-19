@@ -10,3 +10,4 @@ with open("confs/configs.json", "r") as conf:
     CLASSES = configs.get("classes")
     IMG_SIZE = configs.get("img_size")
     N_STEPS = configs.get("n_steps")
+    DEBUG_FOLDER = configs.get("debug_folder")

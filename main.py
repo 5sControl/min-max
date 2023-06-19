@@ -42,4 +42,4 @@ human_model = ObjDetectionModel(
 
 dataset = HTTPLIB2Capture(source, username=username, password=password, logger=logger)
 
-run_min_max(dataset, logger, human_model, box_model, areas, folder, server_url, zones)
+run_min_max(dataset, logger, human_model, box_model, areas, folder, DEBUG_FOLDER, server_url, zones)
