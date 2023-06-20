@@ -1,13 +1,13 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from logging import Logger
-from ultralytics import YOLO
+from get_predictions import predict_boxes, predict_human
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import N_STEPS
 from min_max_utils.MinMaxReporter import Reporter
 
 
-def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box_model: YOLO, areas: list[dict],
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 folder: str, debug_folder: str, server_url: str, zones: list):
     stat_history = []
     is_human_was_detected = True
@@ -22,7 +22,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
         if n_iters % 60 == 0:
             logger.debug("60 detect iterations passed")
 
-        is_human_in_area_now = human_model(img.copy())[0] != 0
+        is_human_in_area_now = predict_human(img.copy())[0] != 0
 
         if (is_human_was_detected and not is_human_in_area_now) or \
                 (not is_human_was_detected and not is_human_in_area_now and
@@ -33,7 +33,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                 for zone in zones:
                     x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])
-                model_preds = [box_model(crop_img) for crop_img in cropped_images]
+                model_preds = [predict_boxes(crop_img) for crop_img in cropped_images]
 
         if is_human_in_area_now:
             logger.debug("Human was detected")
@@ -70,7 +70,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, human_model: YOLO, box
                             logger.critical("Area is not in zone")
                             exit(1)
                     else:
-                        model_preds = box_model(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
+                        model_preds = predict_boxes(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
                         boxes_preds = filter_boxes(area_coord, *model_preds, check=False)
                     item_stat.append(boxes_preds)
             if item_stat:
