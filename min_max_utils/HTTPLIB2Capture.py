@@ -7,7 +7,7 @@ class HTTPLIB2Capture:
     def __init__(self, path, **kwargs):
         self.h = httplib2.Http(".cache")
         self.camera_url = path
-        self.username = kwargs.get('username', None)
+        self.username = 'admin'
         self.password = kwargs.get('password', None)
         self.logger = kwargs.get('logger')
         if self.username is None or self.password is None:
@@ -15,6 +15,7 @@ class HTTPLIB2Capture:
 
     def get_snapshot(self):
         self.h.add_credentials(self.username, self.password)
+        print(self.username, self.password)
         try:
             resp, content = self.h.request(
                 self.camera_url, "GET", body="foobar")
@@ -23,4 +24,5 @@ class HTTPLIB2Capture:
             return image
         except Exception:
             self.logger.warning("Empty image. Skipping iteration...")
+            print('test 2')
             return None

@@ -12,7 +12,7 @@ def save_image(img: np.array, name: str):
 
 def transfer_coords(prev_coords: torch.Tensor, main_item_coords: tuple) -> list:
     x1_item, y1_item, x2_item, y2_item = main_item_coords
-    prev_coords = prev_coords.numpy()
+    prev_coords = prev_coords.cpu().numpy()
     local_boxes = prev_coords.reshape(-1)
     x1n, y1n, x2n, y2n, proba = local_boxes
     coords = [x1n + x1_item, y1n + y1_item, x2n + x1_item, y2n + y1_item, proba]
