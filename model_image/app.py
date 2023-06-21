@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from flask_configs.load_configs import *
 from ObjectDetectionModel import ObjDetectionModel
 import numpy as np
+import os
 
 
 app = Flask(__name__)
@@ -15,15 +16,7 @@ def predict_human():
     if request.method == 'POST':
         img_file = request.files['image']
         image = np.array(Image.open(img_file))
-        n_boxes, coords = human_model(
-            source=image,
-            conf=CONF_THRES,
-            iou=IOU_THRES,
-            max_det=600,
-            classes=CLASSES,
-            verbose=False
-        )
-        print(n_boxes)
+        n_boxes, coords = human_model(image)
         return jsonify(
             {
                 "n_boxes": n_boxes,
@@ -36,14 +29,7 @@ def predict_boxes():
     if request.method == 'POST':
         img_file = request.files['image']
         image = np.array(Image.open(img_file))
-        n_boxes, coords = box_model(
-            source=image,
-            conf=CONF_THRES,
-            iou=IOU_THRES,
-            max_det=600,
-            classes=CLASSES,
-            verbose=False
-        )
+        n_boxes, coords = box_model(image)
         return jsonify(
             {
                 "n_boxes": n_boxes,
@@ -52,4 +38,5 @@ def predict_boxes():
         )
 
 if __name__ == '__main__':
-    app.run(debug=False, port=PORT, load_dotenv=False)
+    server_url = os.environ.get("server_url")
+    app.run(debug=False, port=PORT, load_dotenv=False, host=server_url)
