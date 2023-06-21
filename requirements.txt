@@ -7,3 +7,4 @@ Pillow==9.5.0
 pydantic==1.10.2
 python-dotenv==1.0.0
 PyYAML==6.0
+requests==2.27.1
