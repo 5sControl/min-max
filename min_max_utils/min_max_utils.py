@@ -1,15 +1,10 @@
 import json
 from collections import Counter
 import logging
-import uuid
-import datetime
 import colorlog
 import cv2
 import numpy as np
-import os
-import requests
-from min_max_utils.visualization_utils import draw_rect, draw_text, draw_line
-from min_max_utils.img_process_utils import save_image, transfer_coords
+from min_max_utils.img_process_utils import transfer_coords
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict, subarea_idx: int):

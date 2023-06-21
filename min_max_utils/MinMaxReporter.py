@@ -1,8 +1,8 @@
-from typing import Any
 import requests
 import numpy as np
 from logging import Logger
-from min_max_utils.min_max_utils import find_red_line, convert_coords_from_dict_to_list, draw_rect, draw_line, save_image, draw_text, is_line_in_area
+from min_max_utils.min_max_utils import find_red_line, convert_coords_from_dict_to_list, is_line_in_area
+from min_max_utils.visualization_utils import draw_line, draw_rect, draw_text
 import uuid
 import datetime
 import os
