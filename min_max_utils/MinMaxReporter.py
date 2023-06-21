@@ -3,6 +3,7 @@ import numpy as np
 from logging import Logger
 from min_max_utils.min_max_utils import find_red_line, convert_coords_from_dict_to_list, is_line_in_area
 from min_max_utils.visualization_utils import draw_line, draw_rect, draw_text
+from min_max_utils.img_process_utils import save_image
 import uuid
 import datetime
 import os
@@ -51,10 +52,8 @@ class Reporter:
 
             item_name = item['itemName']
             user_dbg_image_name_url = self.user_folder + '/' + str(uuid.uuid4()) + '.png'
-            dev_dbg_image_name_url = self.debug_folder + '/' + str(uuid.uuid4()) + '.png'
             
             debug_user_image = img.copy()
-            debug_dev_image = img.copy()
 
             rectangle_color = (0, 102, 204)
             for zone in zones:
@@ -71,22 +70,49 @@ class Reporter:
                     if is_line_in_area(area_coords, line):
                         debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
                         is_red_line_in_subarea = is_red_line_in_item = True
-                    draw_line(debug_dev_image, line, area_coords, thickness=4)
 
                 text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
 
                 debug_user_image = draw_rect(debug_user_image, area_coords, rectangle_color, thickness=2)
 
                 for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                    text = str(round(float(bbox_coords[4]), 2))
+                    text = str(idx + 1)
 
-                    debug_user_image = draw_rect(debug_user_image, bbox_coords[:4], (255, 51, 255), thickness=2)
-                    debug_user_image = draw_text(debug_user_image, bbox_coords[:4], text, (255, 255, 255), proba=True)
+                    debug_user_image = draw_rect(
+                        debug_user_image, 
+                        bbox_coords[:4], 
+                        (51, 51, 255) if is_red_line_in_item else (0, 255, 0), 
+                        thickness=2
+                    )
+                    debug_user_image = draw_text(
+                        debug_user_image,
+                        bbox_coords[:2],
+                        text, 
+                        bbox_coords[2] - bbox_coords[0], 
+                        (255, 255, 255),
+                        min_font_size=15, 
+                        img_fraction=None
+                    )
 
-                    debug_dev_image = draw_rect(debug_dev_image, bbox_coords[:4], (255, 51, 255), thickness=2)
 
+                debug_user_image = draw_text(
+                    debug_user_image, 
+                    area_coords[:2], 
+                    text_item, 
+                    area_coords[2] - area_coords[0], 
+                    (255, 255, 255)
+                )
 
-                debug_user_image = draw_text(debug_user_image, area_coords, text_item, (255, 255, 255), proba=False)
+            status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
+            text_all_img = f"{status_text}\n{text_item} total number: {sum(n_boxes_history[item_index])}"
+            debug_user_image = draw_text(
+                    debug_user_image, 
+                    (0, 0), 
+                    text_all_img, 
+                    1920, 
+                    (255, 255, 255),
+                    img_fraction=0.4
+            )
 
             for idx, zone in enumerate(zones):
                 if zone.get("zoneId") == item.get("zoneId"):
@@ -101,7 +127,6 @@ class Reporter:
                         }
                     )
             save_image(debug_user_image, user_dbg_image_name_url)
-            save_image(debug_dev_image, dev_dbg_image_name_url)
         photo_start = {
             'date': datetime.datetime.now()
         }

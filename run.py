@@ -22,7 +22,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         if n_iters % 60 == 0:
             logger.debug("60 detect iterations passed")
 
-        is_human_in_area_now = predict_human(img.copy())[0] != 0
+        is_human_in_area_now = predict_human(img.copy(), server_url)[0] != 0
 
         if (is_human_was_detected and not is_human_in_area_now) or \
                 (not is_human_was_detected and not is_human_in_area_now and
@@ -33,7 +33,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 for zone in zones:
                     x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])
-                model_preds = [predict_boxes(crop_img) for crop_img in cropped_images]
+                model_preds = [predict_boxes(crop_img, server_url) for crop_img in cropped_images]
 
         if is_human_in_area_now:
             logger.debug("Human was detected")
@@ -70,7 +70,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                             logger.critical("Area is not in zone")
                             exit(1)
                     else:
-                        model_preds = predict_boxes(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
+                        model_preds = predict_boxes(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]], server_url)
                         boxes_preds = filter_boxes(area_coord, *model_preds, check=False)
                     item_stat.append(boxes_preds)
             if item_stat:
