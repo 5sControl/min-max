@@ -9,4 +9,4 @@ WORKDIR /var/www/5scontrol
 COPY . .
 RUN mkdir -p /usr/src/app
 EXPOSE 5000
-CMD [ "flask", "run","--host","0.0.0.0","--port","5000"]
+ENTRYPOINT ["python", "app.py"]
