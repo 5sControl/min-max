@@ -28,4 +28,4 @@ jobs:
           context: .
           file: Dockerfile
           push: True
-          tags: 5scontrol/min_max_python:v0.3.12
+          tags: 5scontrol/min_max_python:v0.3.13
