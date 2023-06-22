@@ -8,4 +8,5 @@ RUN apt-get install ffmpeg libsm6 libxext6  -y
 WORKDIR /var/www/5scontrol
 COPY . .
 RUN mkdir -p /usr/src/app
-ENTRYPOINT ["python", "app.py"]
+EXPOSE 5000
+CMD [ "flask", "run","--host","0.0.0.0","--port","5000"]

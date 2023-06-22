@@ -3,12 +3,12 @@ import numpy as np
 import cv2
 
 
-PORT = 8888
+PORT = 5000
 
 def predict_human(img: np.array, server_url: str):
     cv2.imwrite("img.jpg", cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     response = requests.post(
-            f"{server_url}:{PORT}/predict_human",
+            f"http://127.0.0.1:{PORT}/predict_human",
             files={
                 "image": open("img.jpg", 'rb')
             }
@@ -22,7 +22,7 @@ def predict_boxes(img: np.array, server_url: str):
     cv2.imwrite("images/img.jpg", cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     with open("img.jpg", 'rb') as img_file:
         response = requests.post(
-            f"{server_url}:{PORT}/predict_boxes",
+            f"http://127.0.0.1:{PORT}/predict_boxes",
             files={
                 "image": img_file
             }

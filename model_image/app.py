@@ -36,7 +36,3 @@ def predict_boxes():
                 "coordinates": coords.tolist()
             }
         )
-
-if __name__ == '__main__':
-    server_url = os.environ.get("server_url")
-    app.run(debug=False, port=PORT, load_dotenv=False, host=server_url)
