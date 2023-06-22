@@ -3,13 +3,29 @@ from flask import Flask, jsonify, request
 from flask_configs.load_configs import *
 from ObjectDetectionModel import ObjDetectionModel
 import numpy as np
-import os
+import colorlog
+import logging
 
 
 app = Flask(__name__)
 human_model = ObjDetectionModel(HUMAN_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
 box_model = ObjDetectionModel(BOX_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
 
+
+logger = logging.getLogger('min_max_logger')
+handler = colorlog.StreamHandler()
+handler.setFormatter(colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)s %(levelname)s: %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        log_colors={
+            'DEBUG': 'cyan',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'CRITICAL': 'bold_red,bg_white',
+        }))
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+logger.propagate = False
 
 @app.route('/predict_human', methods=['POST'])
 def predict_human():
@@ -30,6 +46,7 @@ def predict_boxes():
         img_file = request.files['image']
         image = np.array(Image.open(img_file))
         n_boxes, coords = box_model(image)
+        logger.info("Request to predict_boxes: " + str(n_boxes))
         return jsonify(
             {
                 "n_boxes": n_boxes,
