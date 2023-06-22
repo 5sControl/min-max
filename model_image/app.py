@@ -5,6 +5,7 @@ from ObjectDetectionModel import ObjDetectionModel
 import numpy as np
 import colorlog
 import logging
+import os
 
 
 app = Flask(__name__)
@@ -30,8 +31,7 @@ logger.propagate = False
 @app.route('/predict_human', methods=['POST'])
 def predict_human():
     if request.method == 'POST':
-        img_file = request.files['image']
-        image = np.array(Image.open(img_file))
+        image = np.array(request.json['image']).astype(np.float32)
         n_boxes, coords = human_model(image)
         return jsonify(
             {
@@ -43,8 +43,7 @@ def predict_human():
 @app.route('/predict_boxes', methods=['POST'])
 def predict_boxes():
     if request.method == 'POST':
-        img_file = request.files['image']
-        image = np.array(Image.open(img_file))
+        image = np.array(request.json['image']).astype(np.float32)
         n_boxes, coords = box_model(image)
         logger.info("Request to predict_boxes: " + str(n_boxes))
         return jsonify(
