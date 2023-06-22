@@ -1,15 +1,10 @@
 import json
 from collections import Counter
 import logging
-import uuid
-import datetime
 import colorlog
 import cv2
 import numpy as np
-import os
-import requests
-from min_max_utils.visualization_utils import draw_rect, draw_text, draw_line
-from min_max_utils.img_process_utils import save_image, transfer_coords
+from min_max_utils.img_process_utils import transfer_coords
 
 
 def drop_area(areas: list[dict], item_idx: int, item: dict, subarea_idx: int):
@@ -43,12 +38,12 @@ def find_red_line(img):
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # lower mask (0-10)
-    lower_red = np.array([0, 135, 50])
-    upper_red = np.array([7, 255, 255])
+    lower_red = np.array([0, 140, 50])
+    upper_red = np.array([8, 255, 255])
     mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
 
     # upper mask (170-180)
-    lower_red = np.array([170, 70, 50])
+    lower_red = np.array([175, 50, 50])
     upper_red = np.array([180, 255, 255])
     mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
 
@@ -61,9 +56,9 @@ def find_red_line(img):
     src = cv2.cvtColor(output_img, cv2.COLOR_HSV2RGB)
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
-    dst = cv2.Canny(src, 150, 250, None, 3)
+    dst = cv2.medianBlur(src,3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
-                              threshold=50, lines=None, minLineLength=15, maxLineGap=10)
+                              threshold=50, lines=None, minLineLength=20, maxLineGap=15)
     lines = []
     if lines_p is not None:
         for i in range(0, len(lines_p)):
@@ -130,101 +125,3 @@ def convert_coords_from_dict_to_list(coords: dict) -> list:
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
 
-
-def send_report(n_boxes_history, img, areas, folder, logger, server_url, boxes_coords, zones):
-    red_lines = find_red_line(img)
-    report = []
-    if not zones:
-        for item in areas:
-            item['zoneId'] = None
-        zones.append(
-            {
-                "zoneId": None,
-                "zoneName": None,
-                "coords":
-                    [{
-                        "x1": 0,
-                        "x2": 1920,
-                        "y1": 0,
-                        "y2": 1080
-                }],
-                "items": []
-            }
-        )
-    for zone in zones:
-        zone_dict = {'zoneId': zone['zoneId'], 'zoneName': zone['zoneName'], 'items': []}
-        report.append(zone_dict)
-    for item_index, item in enumerate(areas):
-        itemid = item['itemId']
-
-        item_name = item['itemName']
-
-        image_name_url = folder + '/' + str(uuid.uuid4()) + '.png'
-        img_rect = img.copy()
-        rectangle_color = (0, 102, 204)
-        for zone in zones:
-            img_rect = draw_rect(img_rect, convert_coords_from_dict_to_list(zone.get("coords")[0]), rectangle_color)
-
-        is_red_line_in_item = False
-
-        for subarr_idx, coord in enumerate(item['coords']):
-            area_coords = convert_coords_from_dict_to_list(coord)
-
-            is_red_line_in_subarea = False
-
-            for line in red_lines:
-                if is_line_in_area(area_coords, line):
-                    img_rect = draw_line(img_rect, line, area_coords, thickness=4)
-                    is_red_line_in_subarea = is_red_line_in_item = True
-
-            text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
-
-            img_rect = draw_rect(img_rect, area_coords, rectangle_color, thickness=2)
-
-            for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                text = str(round(float(bbox_coords[4]), 2))
-
-                img_rect = draw_rect(img_rect, bbox_coords[:4], (255, 51, 255), thickness=2)
-                img_rect = draw_text(img_rect, bbox_coords[:4], text, (255, 255, 255), proba=True)
-
-            img_rect = draw_text(img_rect, area_coords, text_item, (255, 255, 255), proba=False)
-
-        for idx, zone in enumerate(zones):
-            if zone.get("zoneId") == item.get("zoneId"):
-                report[idx]['items'].append(
-                    {
-                        "itemId": itemid,
-                        "count": sum(n_boxes_history[item_index]),
-                        "image": image_name_url,
-                        "low_stock_level": is_red_line_in_item,
-                        "zoneId": item.get("zoneId"),
-                        "zoneName": zone.get("zoneName")
-                    }
-                )
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        save_image(img_rect, image_name_url)
-    photo_start = {
-        'date': datetime.datetime.now()
-    }
-    report_for_send = {
-        'camera': os.path.basename(folder),
-        'algorithm': "min_max_control",
-        'start_tracking': str(photo_start['date']),
-        'stop_tracking': str(photo_start['date']),
-        'photos': [{'date': str(photo_start['date'])}],
-        'violation_found': False,
-        'extra': report
-    }
-
-    logger.info(
-        '\n'.join(['<<<<<<<<<<<<<<<<<SEND REPORT!!!!!!!>>>>>>>>>>>>>>',
-                   str(report_for_send),
-                   f'{server_url}:8000/api/reports/report-with-photos/'])
-    )
-
-    try:
-        requests.post(
-            url=f'{server_url}:80/api/reports/report-with-photos/', json=report_for_send)
-    except Exception as exc:
-        logger.error("Error while sending report occurred: {}".format(exc))

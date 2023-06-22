@@ -1,6 +1,6 @@
 **/dataset
 **/database
 **/images
-docker-compose_dev.yml
 images
+model_image
 videos

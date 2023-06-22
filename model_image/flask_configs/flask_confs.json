@@ -1,0 +1,11 @@
+{
+    "classes": [
+        0
+    ],
+    "iou_thres": 0.5,
+    "conf_thres": 0.475,
+    "box_detect_model": "min_max_v0.3.10.pt",
+    "human_detect_model": "min_max_v1.0h.pt",
+    "img_size": 640,
+    "port": 5000
+}
