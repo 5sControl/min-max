@@ -6,11 +6,10 @@ import cv2
 PORT = 5000
 
 def predict_human(img: np.array, server_url: str):
-    cv2.imwrite("img.jpg", cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     response = requests.post(
             f"{server_url}:{PORT}/predict_human",
-            files={
-                "image": open("img.jpg", 'rb')
+            json={
+                "image": img.tolist()
             }
         )
     n_boxes = response.json().get('n_boxes')
@@ -19,12 +18,10 @@ def predict_human(img: np.array, server_url: str):
     
 
 def predict_boxes(img: np.array, server_url: str):
-    cv2.imwrite("images/img.jpg", cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    with open("img.jpg", 'rb') as img_file:
         response = requests.post(
             f"{server_url}:{PORT}/predict_boxes",
-            files={
-                "image": img_file
+            json={
+                "image": img.tolist()
             }
         )
         n_boxes = response.json().get('n_boxes')
