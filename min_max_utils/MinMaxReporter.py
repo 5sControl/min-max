@@ -104,14 +104,14 @@ class Reporter:
                 )
 
             status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
-            text_all_img = f"{status_text}\n{text_item} total number: {sum(n_boxes_history[item_index])}"
+            text_all_img = f"{status_text}\n{item_name} total number: {sum(n_boxes_history[item_index])}"
             debug_user_image = draw_text(
                     debug_user_image, 
-                    (0, 0), 
+                    (10, 1070), 
                     text_all_img, 
                     1920, 
                     (255, 255, 255),
-                    img_fraction=0.4
+                    img_fraction=0.3
             )
 
             for idx, zone in enumerate(zones):

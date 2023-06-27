@@ -4,7 +4,11 @@ from get_predictions import predict_boxes, predict_human
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import N_STEPS
+from min_max_utils.visualization_utils import draw_rect
 from min_max_utils.MinMaxReporter import Reporter
+import time
+import uuid
+import cv2
 
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
@@ -15,15 +19,20 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
     reporter = Reporter(logger, server_url, folder, debug_folder)
 
     while True:
-        try:
             img = dataset.get_snapshot()
             if img is None:
+                time.sleep(1)
                 continue
             n_iters += 1
             if n_iters % 60 == 0:
                 logger.debug("60 detect iterations passed")
 
-            is_human_in_area_now = predict_human(img.copy(), server_url)[0] != 0
+            human_preds = predict_human(img.copy(), server_url)
+            is_human_in_area_now = human_preds[0] != 0
+            if is_human_in_area_now:
+                img__  = img.copy()
+                img__ = draw_rect(img__, human_preds[1][0][:4], (255, 255, 255))
+                cv2.imwrite("images/min_max_debug/{}.png".format(uuid.uuid4()), img__)
 
             if (is_human_was_detected and not is_human_in_area_now) or \
                     (not is_human_was_detected and not is_human_in_area_now and
@@ -106,5 +115,3 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 reporter.send_report_to_server(
                     reporter.create_report(n_boxes_per_area, img, areas, coords_per_area, zones))
                 stat_history.clear()
-        except Exception as e:
-            print(e, 'run error')
