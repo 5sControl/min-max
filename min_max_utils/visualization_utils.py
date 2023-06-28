@@ -10,7 +10,6 @@ def draw_rect(img, rect_coords, color, **rect_kwargs):
 
 
 def draw_text(img, coords: list, text: str, area_size:int, text_color: tuple, min_font_size: int = 10, img_fraction: int = 0.3):
-    x1, y1 = list(map(int, coords))
     image = draw_text_util(img, text, coords=coords, text_color=text_color, area_size=area_size,
                            min_font_size=min_font_size, fraction=img_fraction)
     return image
