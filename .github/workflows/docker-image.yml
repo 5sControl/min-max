@@ -1,9 +1,10 @@
-name: Push Docker image
+name: Push Algo Docker image
 
 on:
   push:
     branches:
       - 'main'
+      - 'dev'
 
 jobs:
   push_to_registry:
@@ -28,4 +29,4 @@ jobs:
           context: .
           file: Dockerfile
           push: True
-          tags: 5scontrol/min_max_python:v0.3.13
+          tags: 5scontrol/min_max_python:v0.3.16
