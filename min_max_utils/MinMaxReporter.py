@@ -20,24 +20,25 @@ class Reporter:
         if not os.path.exists(self.debug_folder):
             os.makedirs(self.debug_folder)
 
-    def add_empty_zone(self, zones: list):
-        empty_zone =                 {
-                    "zoneId": None,
-                    "zoneName": None,
-                    "coords":
-                        [{
-                            "x1": 0,
-                            "x2": 1920,
-                            "y1": 0,
-                            "y2": 1080
-                    }],
-                    "items": []
-                }
-        
+    @staticmethod
+    def add_empty_zone(zones: list):
+        empty_zone = {
+            "zoneId": None,
+            "zoneName": None,
+            "coords":
+                [{
+                    "x1": 0,
+                    "x2": 1920,
+                    "y1": 0,
+                    "y2": 1080
+                }],
+            "items": []
+        }
+
         zones.append(empty_zone)
         return zones
 
-    def create_report(self, n_boxes_history: list, img: np.array, areas: list, boxes_coords: list, zones: list) -> str:
+    def create_report(self, n_boxes_history: list, img: np.array, areas: list, boxes_coords: list, zones: list) -> dict:
         red_lines = find_red_line(img)
         report = []
         if not zones:
@@ -49,15 +50,17 @@ class Reporter:
             report.append(zone_dict)
         for item_index, item in enumerate(areas):
             itemid = item['itemId']
+            multi_row = item['multiRow']
 
             item_name = item['itemName']
             user_dbg_image_name_url = self.user_folder + '/' + str(uuid.uuid4()) + '.png'
-            
+
             debug_user_image = img.copy()
 
             rectangle_color = (0, 102, 204)
             for zone in zones:
-                debug_user_image = draw_rect(debug_user_image, convert_coords_from_dict_to_list(zone.get("coords")[0]), rectangle_color)
+                debug_user_image = draw_rect(debug_user_image, convert_coords_from_dict_to_list(zone.get("coords")[0]),
+                                             rectangle_color)
 
             is_red_line_in_item = False
 
@@ -65,8 +68,7 @@ class Reporter:
                 area_coords = convert_coords_from_dict_to_list(coord)
 
                 is_red_line_in_subarea = False
-
-                for line in red_lines:
+                for idx, line in enumerate(red_lines):
                     if is_line_in_area(area_coords, line):
                         debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
                         is_red_line_in_subarea = is_red_line_in_item = True
@@ -75,43 +77,45 @@ class Reporter:
 
                 debug_user_image = draw_rect(debug_user_image, area_coords, rectangle_color, thickness=2)
 
-                for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
-                    text = str(idx + 1)
+                if not multi_row:
+                    for idx, bbox_coords in enumerate(boxes_coords[item_index][subarr_idx]):
+                        text = str(idx + 1)
 
-                    debug_user_image = draw_rect(
-                        debug_user_image, 
-                        bbox_coords[:4], 
-                        (51, 51, 255) if is_red_line_in_item else (0, 255, 0), 
-                        thickness=2
-                    )
-                    debug_user_image = draw_text(
-                        debug_user_image,
-                        bbox_coords[:2],
-                        text, 
-                        bbox_coords[2] - bbox_coords[0], 
-                        (255, 255, 255),
-                        min_font_size=15, 
-                        img_fraction=None
-                    )
-
+                        debug_user_image = draw_rect(
+                            debug_user_image,
+                            bbox_coords[:4],
+                            (51, 51, 255) if is_red_line_in_item else (0, 255, 0),
+                            thickness=2
+                        ) 
+                        debug_user_image = draw_text(
+                            debug_user_image,
+                            bbox_coords[:2],
+                            text,
+                            bbox_coords[2] - bbox_coords[0],
+                            (255, 255, 255),
+                            min_font_size=15,
+                            img_fraction=None
+                        ) 
 
                 debug_user_image = draw_text(
-                    debug_user_image, 
-                    area_coords[:2], 
-                    text_item, 
-                    area_coords[2] - area_coords[0], 
+                    debug_user_image,
+                    area_coords[:2],
+                    text_item,
+                    area_coords[2] - area_coords[0],
                     (255, 255, 255)
                 )
 
             status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
-            text_all_img = f"{status_text}\n{item_name} total number: {sum(n_boxes_history[item_index])}"
+            tot_number = f"\n{item_name} total number: {sum(n_boxes_history[item_index])}" if not multi_row else ""
+            text_all_img = f"{status_text}" + tot_number
             debug_user_image = draw_text(
-                    debug_user_image, 
-                    (10, 1070), 
-                    text_all_img, 
-                    1920, 
-                    (255, 255, 255),
-                    img_fraction=0.3
+                debug_user_image,
+                (10, 1000),
+                text_all_img,
+                1920,
+                (255, 0, 0) if is_red_line_in_item else (0, 255, 0),
+                min_font_size=30,
+                img_fraction=None
             )
 
             for idx, zone in enumerate(zones):
@@ -144,8 +148,8 @@ class Reporter:
     def send_report_to_server(self, report: dict) -> None:
         self.logger.info(
             '\n'.join(['<<<<<<<<<<<<<<<<<SEND REPORT!!!!!!!>>>>>>>>>>>>>>',
-                    str(report),
-                    f'{self.server_url}:8000/api/reports/report-with-photos/'])
+                       str(report),
+                       f'{self.server_url}:8000/api/reports/report-with-photos/'])
         )
         try:
             requests.post(url=f'{self.server_url}:80/api/reports/report-with-photos/', json=report)
