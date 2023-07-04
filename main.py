@@ -26,5 +26,6 @@ folder = os.environ.get("folder")
 logger = create_logger()
 
 dataset = HTTPLIB2Capture(source, username=username, password=password, logger=logger)
+target = os.environ.get("task") if os.environ.get("task") is not None else "boxes"
 
-run_min_max(dataset, logger, areas, folder, DEBUG_FOLDER, server_url, zones)
+run_min_max(dataset, logger, areas, folder, DEBUG_FOLDER, server_url, zones, target)

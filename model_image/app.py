@@ -48,7 +48,20 @@ def predict_boxes():
         logger.info("Request to predict_boxes: " + str(n_boxes))
         return jsonify(
             {
-                "n_boxes": n_boxes,
+                "n_items": n_boxes,
+                "coordinates": coords.tolist()
+            }
+        )
+
+@app.route('/predict_bottles', methods=['POST'])
+def predict_bottles():
+    if request.methos == 'POST':
+        image = np.array(request.json['image']).astype(np.float32)
+        n_bottles, coords = human_model(image, classes=[39])
+        logger.info("Request to predict_bottles: " + str(n_bottles))
+        return jsonify(
+            {
+                "n_items": n_bottles,
                 "coordinates": coords.tolist()
             }
         )
