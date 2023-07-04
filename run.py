@@ -1,6 +1,6 @@
 from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from logging import Logger
-from get_predictions import predict_boxes, predict_human
+from get_predictions import predict_boxes, predict_human, predict_bottles
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import N_STEPS
@@ -12,11 +12,12 @@ import cv2
 
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
-                folder: str, debug_folder: str, server_url: str, zones: list):
+                folder: str, debug_folder: str, server_url: str, zones: list, target: str):
     stat_history = []
     is_human_was_detected = True
     n_iters = 0
     reporter = Reporter(logger, server_url, folder, debug_folder)
+    send_request_func = predict_boxes if target == 'boxes' else predict_bottles 
 
     while True:
         img = dataset.get_snapshot()
@@ -45,7 +46,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 for zone in zones:
                     x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])
-                model_preds = [predict_boxes(crop_img, server_url, logger) for crop_img in cropped_images]
+                model_preds = [send_request_func(crop_img, server_url, logger) for crop_img in cropped_images]
 
         areas_stat = []
 
@@ -78,7 +79,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                             logger.critical("Area is not in zone")
                             exit(1)
                     else:
-                        model_preds = predict_boxes(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]],
+                        model_preds = send_request_func(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]],
                                                     server_url, logger)
                         if model_preds[0] is None:
                             time.sleep(1)
