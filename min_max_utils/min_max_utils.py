@@ -56,14 +56,14 @@ def find_red_line(img):
     src = cv2.cvtColor(output_img, cv2.COLOR_HSV2RGB)
     src = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
 
-    dst = cv2.medianBlur(src,3)
+    dst = cv2.medianBlur(src, 3)
     lines_p = cv2.HoughLinesP(dst, rho=1, theta=np.pi / 180,
                               threshold=50, lines=None, minLineLength=20, maxLineGap=15)
     lines = []
     if lines_p is not None:
         for i in range(0, len(lines_p)):
             line = lines_p[i][0]
-            if abs(line[1] - line[3]) < 100:
+            if abs(line[1] - line[3]) < 50:
                 lines.append(line)
     return lines
 
