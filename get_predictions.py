@@ -36,7 +36,7 @@ def predict_bottles(img: np.array, server_url: str, logger: Logger):
         coordinates = np.array(response.json().get("coordinates"))
     else:
          logger.warning(
-              "Response code = {}.\n JSON = {}".format(status_code, response.json())
+              "Response code = {}.\n response = {}".format(status_code, response)
          )
          n_bottles = None
          coordinates = None
