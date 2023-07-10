@@ -5,12 +5,18 @@ from logging import Logger
 PORT = 5000
 
 def predict_human(img: np.array, server_url: str, logger: Logger):
-    response = requests.post(
-            f"{server_url}:{PORT}/predict_human",
-            json={
-                "image": img.tolist()
-            }
+    try:
+        response = requests.post(
+                f"{server_url}:{PORT}/predict_human",
+                json={
+                    "image": img.tolist()
+                }
+            )
+    except Exception as exc:
+        logger.critical(
+             "Cannot send request. Error - {}".format(exc)
         )
+        return [None, None]
     status_code = response.status_code
     if status_code == 200:
         n_boxes = response.json().get('n_boxes')
@@ -24,12 +30,18 @@ def predict_human(img: np.array, server_url: str, logger: Logger):
     return [n_boxes, coordinates]
     
 def predict_bottles(img: np.array, server_url: str, logger: Logger):
-    response = requests.post(
-            f"{server_url}:{PORT}/predict_bottles",
-            json={
-                "image": img.tolist()
-            }
+    try:
+        response = requests.post(
+                f"{server_url}:{PORT}/predict_bottles",
+                json={
+                    "image": img.tolist()
+                }
+            )
+    except Exception as exc:
+        logger.critical(
+             "Cannot send request. Error - {}".format(exc)
         )
+        return [None, None]
     status_code = response.status_code
     if status_code == 200:
         n_bottles = response.json().get('n_items')
@@ -43,12 +55,18 @@ def predict_bottles(img: np.array, server_url: str, logger: Logger):
     return [n_bottles, coordinates]
 
 def predict_boxes(img: np.array, server_url: str, logger: Logger):
-        response = requests.post(
-            f"{server_url}:{PORT}/predict_boxes",
-            json={
-                "image": img.tolist()
-            }
-        )
+        try:
+            response = requests.post(
+                f"{server_url}:{PORT}/predict_boxes",
+                json={
+                    "image": img.tolist()
+                }
+            )
+        except Exception as exc:
+            logger.critical(
+                "Cannot send request. Error - {}".format(exc)
+            )
+            return [None, None]
         status_code = response.status_code
         if status_code == 200:
             n_boxes = response.json().get('n_items')
