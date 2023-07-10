@@ -5,7 +5,6 @@ from ObjectDetectionModel import ObjDetectionModel
 import numpy as np
 import colorlog
 import logging
-import os
 
 
 app = Flask(__name__)
