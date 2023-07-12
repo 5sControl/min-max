@@ -12,8 +12,8 @@ warnings.filterwarnings("ignore")
 
 if os.environ.get("extra") is None:
     load_dotenv("confs/settings.env")
-extra = os.environ.get("extra")
-extra = ast.literal_eval(extra)[0]
+extra: str = os.environ.get("extra")
+extra = json.loads(extra)[0]
 areas = extra.get("areas")
 zones = extra.get("zones")
 
@@ -26,6 +26,5 @@ folder = os.environ.get("folder")
 logger = create_logger()
 
 dataset = HTTPLIB2Capture(source, username=username, password=password, logger=logger)
-target = os.environ.get("task") if os.environ.get("task") is not None else "boxes"
 
-run_min_max(dataset, logger, areas, folder, DEBUG_FOLDER, server_url, zones, target)
+run_min_max(dataset, logger, areas, folder, DEBUG_FOLDER, server_url, zones)

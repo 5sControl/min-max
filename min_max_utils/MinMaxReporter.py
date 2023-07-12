@@ -73,8 +73,18 @@ class Reporter:
                         debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
                         is_red_line_in_subarea = is_red_line_in_item = True
 
-                text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
+                if multi_row:
+                    text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
+                else:
+                    text_item = f"{item_name}: "
+                    if len(boxes_coords[item_index][subarr_idx]) == 0:
+                        text_item += 'out of stock'
+                    elif len(boxes_coords[item_index][subarr_idx]) <= item["lowStockLevel"]: 
+                        text_item += 'low stock level'
+                    else:
+                        text_item += 'in stock'
 
+                rectangle_color = (0, 255, 0) if "in stock" in text_item else (51, 51, 255)
                 debug_user_image = draw_rect(debug_user_image, area_coords, rectangle_color, thickness=2)
 
                 if not multi_row:
@@ -84,7 +94,7 @@ class Reporter:
                         debug_user_image = draw_rect(
                             debug_user_image,
                             bbox_coords[:4],
-                            (51, 51, 255) if is_red_line_in_item else (0, 255, 0),
+                            rectangle_color,
                             thickness=2
                         ) 
                         debug_user_image = draw_text(
@@ -105,15 +115,27 @@ class Reporter:
                     (255, 255, 255)
                 )
 
-            status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
-            tot_number = f"\n{item_name} total number: {sum(n_boxes_history[item_index])}" if not multi_row else ""
+            total_number = sum(n_boxes_history[item_index])
+
+
+            if multi_row:
+                status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
+            else:
+                if total_number == 0:
+                    status_text = 'Out of stock'
+                elif total_number <= item["lowStockLevel"]:
+                    status_text = "Low stock"
+                else:
+                    status_text = "In stock"
+            
+            tot_number = f"\n{item_name} total number: {total_number}" if not multi_row else ""
             text_all_img = f"{status_text}" + tot_number
             debug_user_image = draw_text(
                 debug_user_image,
                 (10, 1000),
                 text_all_img,
                 1920,
-                (255, 0, 0) if is_red_line_in_item else (0, 255, 0),
+                (255, 0, 0) if status_text in ('Out of stock', 'Low stock') else (0, 255, 0),
                 min_font_size=30,
                 img_fraction=None
             )

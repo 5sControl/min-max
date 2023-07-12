@@ -18,7 +18,7 @@ def draw_text(img, coords: list, text: str, area_size:int, text_color: tuple, mi
 def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5, min_font_size: int = 14) -> ImageFont:
     font = ImageFont.truetype("fonts/Inter-Bold.ttf", min_font_size)
     fontsize = min_font_size
-    while font.getsize(text)[0] < img_fraction * area_size:
+    while font.getlength(text) < img_fraction * area_size:
         fontsize += 1
         font = ImageFont.truetype("fonts/Inter-Bold.ttf", fontsize)
     return font
