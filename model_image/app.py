@@ -10,6 +10,7 @@ import logging
 app = Flask(__name__)
 human_model = ObjDetectionModel(HUMAN_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
 box_model = ObjDetectionModel(BOX_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
+bottle_model = ObjDetectionModel(BOTTLE_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
 
 
 logger = logging.getLogger('min_max_logger')
@@ -56,7 +57,7 @@ def predict_boxes():
 def predict_bottles():
     if request.method == 'POST':
         image = np.array(request.json['image']).astype(np.float32)
-        n_bottles, coords = human_model(image, classes=[39])
+        n_bottles, coords = bottle_model(image)
         logger.info("Request to predict_bottles: " + str(n_bottles))
         return jsonify(
             {
