@@ -24,6 +24,7 @@
 .vscode/
 *.env           
 test.py
+*.pt
 
 storage.googleapis.com
 runs/*
