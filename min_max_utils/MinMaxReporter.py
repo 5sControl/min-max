@@ -50,7 +50,7 @@ class Reporter:
             report.append(zone_dict)
         for item_index, item in enumerate(areas):
             itemid = item['itemId']
-            multi_row = item['multiRow']
+            multi_row = item['task'] == 'red lines'
 
             item_name = item['itemName']
             user_dbg_image_name_url = self.user_folder + '/' + str(uuid.uuid4()) + '.png'
