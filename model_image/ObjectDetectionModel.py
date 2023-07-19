@@ -1,5 +1,6 @@
 from ultralytics import YOLO
 import torch
+import numpy as np
 
 
 class ObjDetectionModel:
@@ -10,7 +11,7 @@ class ObjDetectionModel:
         self.classes = classes
 
     @torch.no_grad()
-    def __call__(self, img, classes: list = None) -> list:
+    def __call__(self, img: np.array, classes: list = None) -> list:
         results = self.model(
             source=img,
             conf=self.conf_thresh,
@@ -19,7 +20,6 @@ class ObjDetectionModel:
             classes=self.classes if classes is None else classes,
             verbose=False
         )[0].boxes
-        n_boxes = len(results)
         coords_with_confs = torch.hstack((results.xyxy, results.conf.unsqueeze(-1)))
-        return [n_boxes, coords_with_confs]
+        return coords_with_confs
     
