@@ -109,7 +109,7 @@ def check_box_in_area(box_coord, area_coord):
     return False
 
 
-def filter_boxes(main_item_coords, _, boxes_coords, area_coords=None, check=True):
+def filter_boxes(main_item_coords, boxes_coords, area_coords=None, check=True):
     result = []
     for box_coord in boxes_coords:
         box_coord = transfer_coords(box_coord, main_item_coords)
