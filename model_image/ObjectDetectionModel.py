@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 
-class ObjDetectionModel:
+class YOLOv8ObjDetectionModel:
     def __init__(self, path: str, conf_thresh: float, iou_thresh: float, classes: list) -> None:
         self.model = YOLO(path)
         self.conf_thresh = conf_thresh

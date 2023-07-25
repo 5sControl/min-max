@@ -7,7 +7,7 @@ with open("flask_configs/flask_confs.json", "r") as conf:
     IOU_THRES = configs.get("iou_thres")
     BOX_MODEL_PATH = configs.get("box_detect_model")
     HUMAN_MODEL_PATH = configs.get("human_detect_model")
-    BOTTLE_MODEL_PATH = configs.get("bottle_detect_model")
+    CONF_PATH = configs.get("config_path")
     CLASSES = configs.get("classes")
     IMG_SIZE = configs.get("img_size")
     PORT = configs.get("port")
