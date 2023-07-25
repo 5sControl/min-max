@@ -39,7 +39,7 @@ class Reporter:
         return zones
 
     def create_report(self, n_boxes_history: list, img: np.array, areas: list, boxes_coords: list, zones: list) -> dict:
-        red_lines = find_red_line(img)
+        red_lines = find_red_line(img) 
         report = []
         if not zones:
             for item in areas:
@@ -67,13 +67,12 @@ class Reporter:
             for subarr_idx, coord in enumerate(item['coords']):
                 area_coords = convert_coords_from_dict_to_list(coord)
 
-                is_red_line_in_subarea = False
-                for idx, line in enumerate(red_lines):
-                    if is_line_in_area(area_coords, line):
-                        debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
-                        is_red_line_in_subarea = is_red_line_in_item = True
-
                 if multi_row:
+                    is_red_line_in_subarea = False
+                    for idx, line in enumerate(red_lines):
+                        if is_line_in_area(area_coords, line):
+                            debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
+                            is_red_line_in_subarea = is_red_line_in_item = True
                     text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
                 else:
                     text_item = f"{item_name}: "
