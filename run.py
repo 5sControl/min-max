@@ -1,6 +1,5 @@
-from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
 from logging import Logger
-from get_predictions import predict_boxes, predict_human, predict_bottles
+from connection import HTTPLIB2Capture, ModelPredictionsReceiver
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import N_STEPS
@@ -10,6 +9,8 @@ import time
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 folder: str, debug_folder: str, server_url: str, zones: list):
+    
+    model_pred_receiver = ModelPredictionsReceiver(server_url, logger)
     stat_history = []
     is_human_was_detected = True
     n_iters = 0
@@ -24,14 +25,14 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         if n_iters % 60 == 0:
             logger.debug("60 detect iterations passed")
 
-        human_preds = predict_human(img.copy(), server_url, logger)
-        if human_preds[0] is None:
-            time.sleep(1)
-            continue
-        is_human_in_image_now = human_preds[0] != 0
+        human_preds = model_pred_receiver.predict_human(img.copy())
+
+        is_human_in_image_now = human_preds is not None and human_preds.size 
 
         if is_human_in_image_now:
             logger.debug("Human is detected")
+            time.sleep(1)
+            continue
 
         if (is_human_was_detected and not is_human_in_image_now) or \
                 (not is_human_was_detected and not is_human_in_image_now and
@@ -42,10 +43,10 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                 for zone in zones:
                     x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])    
-                model_preds_boxes = [predict_boxes(crop_img, server_url, logger) for crop_img in cropped_images]
+                model_preds_boxes = [model_pred_receiver.predict_boxes(crop_img) for crop_img in cropped_images]
                 if any(elem is None for elem in model_preds_boxes):
                     continue
-                model_preds_bottles = [predict_bottles(crop_img, server_url, logger) for crop_img in cropped_images]
+                model_preds_bottles = [model_pred_receiver.predict_bottles(crop_img) for crop_img in cropped_images]
                 if any(elem[0] is None for elem in model_preds_bottles):
                     continue
 
@@ -85,13 +86,12 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                             logger.critical("Area is not in zone")
                             exit(1)
                     else:
-                        send_request_func = predict_boxes if item["task"] == "boxes" else predict_bottles
-                        model_preds = send_request_func(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]],
-                                                    server_url, logger)
-                        if model_preds[0] is None:
+                        send_request_func = model_pred_receiver.predict_boxes if item["task"] == "boxes" else model_pred_receiver.predict_bottles
+                        model_preds = send_request_func(img[area_coord[1]:area_coord[3], area_coord[0]:area_coord[2]])
+                        if model_preds is None:
                             time.sleep(1)
                             break
-                        boxes_preds = filter_boxes(area_coord, *model_preds, check=False)
+                        boxes_preds = filter_boxes(area_coord, model_preds, check=False)
                     item_stat.append(boxes_preds)
             if item_stat:
                 areas_stat.append(item_stat)

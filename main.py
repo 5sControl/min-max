@@ -1,4 +1,4 @@
-from min_max_utils.HTTPLIB2Capture import HTTPLIB2Capture
+from connection import HTTPLIB2Capture
 from min_max_utils.min_max_utils import create_logger
 import warnings
 import os

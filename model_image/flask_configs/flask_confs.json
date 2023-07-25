@@ -4,9 +4,9 @@
     ],
     "iou_thres": 0.5,
     "conf_thres": 0.46,
-    "box_detect_model": "min_max_v0.3.10.pt",
-    "human_detect_model": "min_max_v1.0h.pt",
-    "bottle_detect_model": "min_max_v0.4.3b.pt",
+    "config_path": "weights/yolor_csp_x.cfg",
+    "box_detect_model": "weights/min_max_v0.3.10.pt",
+    "human_detect_model": "weights/min_max_v0.4.4b.pt",
     "img_size": 640,
     "port": 5000
 }
