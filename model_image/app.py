@@ -12,7 +12,7 @@ import io
 app = Flask(__name__)
 human_model = YOLORObjectDetectionModel(HUMAN_MODEL_PATH, CONF_PATH, CONF_THRES, IOU_THRES, CLASSES)
 box_model = YOLOv8ObjDetectionModel(BOX_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
-bottle_model = YOLORObjectDetectionModel(HUMAN_MODEL_PATH, CONF_PATH, 0.25, IOU_THRES, [39])
+bottle_model = YOLORObjectDetectionModel(HUMAN_MODEL_PATH, CONF_PATH, 0.2, IOU_THRES, [39])
 
 
 logger = logging.getLogger('min_max_logger')
