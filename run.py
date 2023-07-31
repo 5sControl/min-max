@@ -5,9 +5,10 @@ from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert
 from confs.load_configs import N_STEPS
 from min_max_utils.MinMaxReporter import Reporter
 import time
+from typing import Sequence
 
 
-def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
                 folder: str, debug_folder: str, server_url: str, zones: list):
     
     model_pred_receiver = ModelPredictionsReceiver(server_url, logger)
@@ -31,14 +32,14 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
 
         if is_human_in_image_now:
             logger.debug("Human is detected")
-            stat_history.clear()
             time.sleep(1)
+            is_human_was_detected = is_human_in_image_now
             continue
 
         if (is_human_was_detected and not is_human_in_image_now) or \
                 (not is_human_was_detected and not is_human_in_image_now and
                  len(stat_history)):
-            logger.debug("Boxes counting...")
+            logger.debug("Objects counting...")
             if zones:
                 cropped_images = []
                 for zone in zones:
