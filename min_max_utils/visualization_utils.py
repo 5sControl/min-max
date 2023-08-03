@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
+from typing import Sequence
 
 
 def draw_rect(img, rect_coords, color, **rect_kwargs):
@@ -24,7 +25,7 @@ def get_scaled_font(text: str, area_size: int, img_fraction: float = 0.5, min_fo
     return font
 
 
-def draw_text_util(img: np.array, text: str, coords: tuple[int, int], text_color: tuple[int, int, int], area_size: int,
+def draw_text_util(img: np.array, text: str, coords: Sequence[int], text_color: Sequence[int], area_size: int,
                    min_font_size: int, fraction: float) -> np.array:
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(img)
