@@ -36,6 +36,7 @@ class ModelPredictionsReceiver:
     
     def predict_bottles(self, img: np.array):
         try:
+            self._logger.debug("Sending request to model server")
             response = requests.post(
                 f"{self._server_url}:{PORT}/predict_bottles",
                 files={
@@ -43,12 +44,14 @@ class ModelPredictionsReceiver:
                 }
             )
             response.raise_for_status()
+            self._logger.debug("Bottles preds received")
             return np.array(response.json().get("coordinates"))
         except Exception as exc:
             self._logger.critical("Cannot send request to model server. Error - {}".format(exc))
 
     def predict_boxes(self, img: np.array):
         try:
+            self._logger.debug("Sending request to model server")
             response = requests.post(
                 f"{self._server_url}:{PORT}/predict_boxes",
                 files={
@@ -56,6 +59,7 @@ class ModelPredictionsReceiver:
                 }
             )
             response.raise_for_status()
+            self._logger.debug("Boxes preds received")
             return np.array(response.json().get("coordinates"))
         except Exception as exc:
             self._logger.critical("Cannot send request to model server. Error - {}".format(exc))

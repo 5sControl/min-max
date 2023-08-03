@@ -13,7 +13,6 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
     model_pred_receiver = ModelPredictionsReceiver(server_url, logger)
     stat_history = []
     is_human_was_detected = True
-    n_iters = 0
     reporter = Reporter(logger, server_url, folder, debug_folder)
 
     while True:
@@ -21,11 +20,10 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         if img is None:
             time.sleep(1)
             continue
-        n_iters += 1
-        if n_iters % 60 == 0:
-            logger.debug("60 detect iterations passed")
 
+        logger.debug("Sending request to model server")
         human_preds = model_pred_receiver.predict_human(img.copy())
+        logger.debug("Human preds received")
 
         is_human_in_image_now = human_preds is not None and human_preds.size 
 
@@ -80,6 +78,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                                     *model_preds_to_use[idx], 
                                     area_coord
                                 )
+                                logger.debug(f"{item.get('itemName')} item -> {zone.get('zoneName')} zone")
                                 item["zoneId"] = zone.get("zoneId")
                                 break
                         if boxes_preds is None:
@@ -104,7 +103,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         areas_stat.clear()
 
         if len(stat_history) >= N_STEPS and not is_human_in_image_now:
-            logger.info("Report creating")
+            logger.debug("Objects number matrix creation")
             n_boxes_per_area = []
             coords_per_area = []
             for item_idx, item_iter in enumerate(stat_history[0]):
@@ -122,6 +121,8 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                     coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
                 n_boxes_per_area.append(n_box_item_ctxt)
                 coords_per_area.append(coord_item_ctxt)
+            logger.debug("Report creation")
             reporter.send_report_to_server(
                 reporter.create_report(n_boxes_per_area, img, areas, coords_per_area, zones))
             stat_history.clear()
+            logger.debug("Report sent")
