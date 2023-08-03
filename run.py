@@ -5,15 +5,15 @@ from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert
 from confs.load_configs import N_STEPS
 from min_max_utils.MinMaxReporter import Reporter
 import time
+from typing import Sequence
 
 
-def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
+def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
                 folder: str, debug_folder: str, server_url: str, zones: list):
     
     model_pred_receiver = ModelPredictionsReceiver(server_url, logger)
     stat_history = []
     is_human_was_detected = True
-    n_iters = 0
     reporter = Reporter(logger, server_url, folder, debug_folder)
 
     while True:
@@ -21,33 +21,33 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         if img is None:
             time.sleep(1)
             continue
-        n_iters += 1
-        if n_iters % 60 == 0:
-            logger.debug("60 detect iterations passed")
 
+        logger.debug("Sending request to model server")
         human_preds = model_pred_receiver.predict_human(img.copy())
+        logger.debug("Human preds received")
 
         is_human_in_image_now = human_preds is not None and human_preds.size 
 
         if is_human_in_image_now:
             logger.debug("Human is detected")
             time.sleep(1)
+            is_human_was_detected = is_human_in_image_now
             continue
 
         if (is_human_was_detected and not is_human_in_image_now) or \
                 (not is_human_was_detected and not is_human_in_image_now and
                  len(stat_history)):
-            logger.debug("Boxes counting...")
+            logger.debug("Objects counting...")
             if zones:
                 cropped_images = []
                 for zone in zones:
                     x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
                     cropped_images.append(img[y1:y2, x1:x2])    
                 model_preds_boxes = [model_pred_receiver.predict_boxes(crop_img) for crop_img in cropped_images]
-                if any(elem is None for elem in model_preds_boxes):
+                if any([elem is None for elem in model_preds_boxes]):
                     continue
                 model_preds_bottles = [model_pred_receiver.predict_bottles(crop_img) for crop_img in cropped_images]
-                if any(elem[0] is None for elem in model_preds_bottles):
+                if any([elem is None for elem in model_preds_bottles]):
                     continue
 
         areas_stat = []
@@ -71,15 +71,16 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                         (not is_human_was_detected and not is_human_in_image_now and len(stat_history)):
                     boxes_preds = None
                     if zones:
-                        model_preds_to_use = model_preds_boxes if item["task"] == "boxes" else model_preds_bottles
+                        model_preds_to_use = model_preds_boxes if item["task"] in ["boxes", "box"] else model_preds_bottles
                         for idx, zone in enumerate(zones):
                             zone_coords = convert_coords_from_dict_to_list(zone.get("coords")[0])
                             if check_box_in_area(area_coord, zone_coords):
                                 boxes_preds = filter_boxes(
                                     zone_coords, 
-                                    *model_preds_to_use[idx], 
+                                    model_preds_to_use[idx], 
                                     area_coord
                                 )
+                                logger.debug(f"{item.get('itemName')} item -> {zone.get('zoneName')} zone")
                                 item["zoneId"] = zone.get("zoneId")
                                 break
                         if boxes_preds is None:
@@ -104,7 +105,7 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
         areas_stat.clear()
 
         if len(stat_history) >= N_STEPS and not is_human_in_image_now:
-            logger.info("Report creating")
+            logger.debug("Objects number matrix creation")
             n_boxes_per_area = []
             coords_per_area = []
             for item_idx, item_iter in enumerate(stat_history[0]):
@@ -122,6 +123,8 @@ def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: list[dict],
                     coord_item_ctxt.append(stat_history[idx][item_idx][arr_idx][1])
                 n_boxes_per_area.append(n_box_item_ctxt)
                 coords_per_area.append(coord_item_ctxt)
+            logger.debug("Report creation")
             reporter.send_report_to_server(
                 reporter.create_report(n_boxes_per_area, img, areas, coords_per_area, zones))
             stat_history.clear()
+            logger.debug("Report sent")

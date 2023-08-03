@@ -5,9 +5,10 @@ import colorlog
 import cv2
 import numpy as np
 from min_max_utils.img_process_utils import transfer_coords
+from typing import Sequence
 
 
-def drop_area(areas: list[dict], item_idx: int, item: dict, subarea_idx: int):
+def drop_area(areas: Sequence[dict], item_idx: int, item: dict, subarea_idx: int):
     logger = logging.getLogger('min_max_logger')
     if len(item['coords']) == 1:
         logger.info("Item was dropped - {}".format(areas.pop(item_idx)))
