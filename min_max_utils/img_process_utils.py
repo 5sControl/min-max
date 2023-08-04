@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from PIL import Image
+from numba import njit, float64, int64
 
 
 def save_image(img: np.array, name: str):
@@ -8,10 +9,9 @@ def save_image(img: np.array, name: str):
     pil_img = Image.fromarray(img)
     pil_img.save(name, 'PNG', transparency=(10, 10, 10))
 
-
-def transfer_coords(prev_coords: np.array, main_item_coords: tuple) -> list:
-    x1_item, y1_item, x2_item, y2_item = main_item_coords
-    local_boxes = prev_coords.reshape(-1)
-    x1n, y1n, x2n, y2n, proba = local_boxes
-    coords = [x1n + x1_item, y1n + y1_item, x2n + x1_item, y2n + y1_item, proba]
-    return coords
+@njit(float64[:](float64[:], int64[:]))
+def transfer_coords(prev_coords: np.array, main_item_coords: tuple) -> np.array:
+    result_coords = prev_coords.copy()
+    result_coords[:2] += main_item_coords[:2]
+    result_coords[2:-1] += main_item_coords[:2]
+    return result_coords
