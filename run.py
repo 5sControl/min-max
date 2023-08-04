@@ -5,50 +5,90 @@ from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert
 from confs.load_configs import N_STEPS
 from min_max_utils.MinMaxReporter import Reporter
 import time
+import numpy as np
 from typing import Sequence
+import numba
 
+
+class MinMaxAlgorithm:
+    def __init__(self, http_capture: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
+                folder: str, debug_folder: str, server_url: str, zones: list) -> None:
+        self._http_capture = http_capture
+        self._logger = logger
+        self._areas = areas
+        self._folder = folder
+        self._debug_folder = debug_folder
+        self._server_url = server_url
+        self._zones = zones
+        self._model_preds_receiver =  ModelPredictionsReceiver(self._server_url, self._logger)
+        self._step_count_history = np.array([])
+        self._is_human_was_detected = True
+        self._reporter = Reporter(self._logger, self._server_url, self._folder, self._debug_folder)
+        self._min_epoch_time = 2   # change on config key in future
+
+    def _check_if_call_models(self, is_human_in_image_now: True) -> bool:
+        # check if situation is appropriate for calling models
+        return (self._is_human_was_detected and not is_human_in_image_now) or \
+               (not self._is_human_was_detected and not is_human_in_image_now and len(self._step_count_history))
+    
+    @numba.njit(parallel=True)
+    def _crop_image_by_zones(self, image: np.array, zones: list) -> np.array:
+        cropped_images = []
+        for zone in zones:
+            x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone)
+            cropped_images.append(image[y1:y2, x1:x2])  
+        return np.array(cropped_images)
+    
+    def _add_count_to_history(self):
+        pass
+
+    def _clear_count_history(self):
+        pass
+
+    def start(self):
+        while True:
+            start_epoch_time = time.time()
+            self._run_one_min_max_epoch()
+            end_epoch_time = time.time()
+            time_passed = end_epoch_time - start_epoch_time
+            if time_passed < self._min_epoch_time:
+                time.sleep(time_passed)
+
+    def _run_one_min_max_epoch(self):
+        image = self._http_capture.get_snapshot()
+        if image is None:
+            return
+        self._logger.debug("Sending request to model server")
+        human_preds = self._model_preds_receiver.predict_human(image.copy())
+        if human_preds is None:
+            return
+        self._logger.debug("Human preds received")
+
+        is_human_in_image_now = human_preds is not None and human_preds.size
+
+        if is_human_in_image_now:
+            # skip this iteration
+            self._logger.debug("Human is detected")
+            self._is_human_was_detected = True
+            return
+
+        if self._check_if_call_models(is_human_in_image_now):
+            # for zone mode
+            self._logger.debug("Object counting in zones mode...")
+            if self._zones:
+                zone_img_fragments = self._crop_image_by_zones(image, self._zones)
+                model_preds_boxes = [self._model_preds_receiver.predict_boxes(crop_img) for crop_img in zone_img_fragments]
+                if any([elem is None for elem in model_preds_boxes]):
+                    return
+                model_preds_bottles = [self._model_preds_receiver.predict_bottles(crop_img) for crop_img in zone_img_fragments]
+                if any([elem is None for elem in model_preds_bottles]):
+                    return
+
+        
 
 def run_min_max(dataset: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
                 folder: str, debug_folder: str, server_url: str, zones: list):
     
-    model_pred_receiver = ModelPredictionsReceiver(server_url, logger)
-    stat_history = []
-    is_human_was_detected = True
-    reporter = Reporter(logger, server_url, folder, debug_folder)
-
-    while True:
-        img = dataset.get_snapshot()
-        if img is None:
-            time.sleep(1)
-            continue
-
-        logger.debug("Sending request to model server")
-        human_preds = model_pred_receiver.predict_human(img.copy())
-        logger.debug("Human preds received")
-
-        is_human_in_image_now = human_preds is not None and human_preds.size 
-
-        if is_human_in_image_now:
-            logger.debug("Human is detected")
-            time.sleep(1)
-            is_human_was_detected = is_human_in_image_now
-            continue
-
-        if (is_human_was_detected and not is_human_in_image_now) or \
-                (not is_human_was_detected and not is_human_in_image_now and
-                 len(stat_history)):
-            logger.debug("Objects counting...")
-            if zones:
-                cropped_images = []
-                for zone in zones:
-                    x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone.get("coords")[0])
-                    cropped_images.append(img[y1:y2, x1:x2])    
-                model_preds_boxes = [model_pred_receiver.predict_boxes(crop_img) for crop_img in cropped_images]
-                if any([elem is None for elem in model_preds_boxes]):
-                    continue
-                model_preds_bottles = [model_pred_receiver.predict_bottles(crop_img) for crop_img in cropped_images]
-                if any([elem is None for elem in model_preds_bottles]):
-                    continue
 
         areas_stat = []
 

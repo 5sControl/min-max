@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from min_max_utils.img_process_utils import transfer_coords
 from typing import Sequence
+import numba
 
 
 def drop_area(areas: Sequence[dict], item_idx: int, item: dict, subarea_idx: int):
@@ -121,7 +122,8 @@ def filter_boxes(main_item_coords, boxes_coords, area_coords=None, check=True):
     return [len(result), result]
 
 
-def convert_coords_from_dict_to_list(coords: dict) -> list:
+@numba()
+def convert_coords_from_dict_to_list(coords: list) -> list:
     values = list(map(int, list(coords.values())))
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
