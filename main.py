@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from run import run_min_max
 from confs.load_configs import *
-import ast
 
 
 warnings.filterwarnings("ignore")
