@@ -10,15 +10,12 @@ import os
 
 
 class Reporter:
-    def __init__(self, logger: Logger, server_url: str, user_folder: str, debug_folder: str) -> None:
+    def __init__(self, logger: Logger, server_url: str, user_folder: str) -> None:
         self.logger = logger
         self.server_url = server_url
         self.user_folder = user_folder
         if not os.path.exists(self.user_folder):
             os.makedirs(self.user_folder)
-        self.debug_folder = debug_folder
-        if not os.path.exists(self.debug_folder):
-            os.makedirs(self.debug_folder)
 
     @staticmethod
     def add_empty_zone(zones: list):
