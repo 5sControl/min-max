@@ -115,7 +115,7 @@ class Reporter:
 
 
             if multi_row:
-                status_text = 'Out of stock' if is_red_line_in_item else 'In stock'
+                status_text = 'low stock level' if is_red_line_in_item else 'In stock'
             else:
                 if total_number == 0:
                     status_text = 'Out of stock'
