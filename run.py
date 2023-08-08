@@ -139,6 +139,7 @@ class MinMaxAlgorithm:
     def _send_data_for_report(self, image):
         n_boxes_per_area = []
         coords_per_area = []
+        self._logger.debug(f"N BOXES HIST PER STEP >>>\n {self._step_count_history} \n<<<")
         for item_idx, item_iter in enumerate(self._step_count_history[0]):
                 n_box_item_ctxt = []
                 coord_item_ctxt = []
@@ -157,5 +158,5 @@ class MinMaxAlgorithm:
         self._logger.debug("Report creation")
         self._reporter.send_report_to_server(
         self._reporter.create_report(n_boxes_per_area, image, self._areas, coords_per_area, self._zones))
-        self._stat_history.clear()
+        self._step_count_history.clear()
         self._logger.debug("Report sent")

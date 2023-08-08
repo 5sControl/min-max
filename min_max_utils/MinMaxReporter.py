@@ -36,7 +36,7 @@ class Reporter:
         return zones
 
     def create_report(self, n_boxes_history: list, img: np.array, areas: list, boxes_coords: list, zones: list) -> dict:
-        self.logger.debug(f"BOXES NUMBER HISTORY >>>>> {n_boxes_history} <<<<<<")
+        self.logger.debug(f"BOXES NUMBER PER ITEM >>>>> \n{n_boxes_history}\n <<<<<<")
         red_lines = find_red_line(img) 
         report = []
         if not zones:

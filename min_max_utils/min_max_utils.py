@@ -123,7 +123,6 @@ def filter_boxes(main_item_coords, boxes_coords, area_coords=None, check=True):
 
 
 def convert_coords_from_dict_to_list(coords: dict) -> list:
-    print(coords)
     values = list(map(int, list(coords.values())))
     assert len(values) == 4
     return [values[0], values[2], values[1], values[3]]
