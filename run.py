@@ -41,7 +41,7 @@ class MinMaxAlgorithm:
         pass
 
     def _clear_count_history(self):
-        pass
+        self._step_count_history.clear()
 
     def start(self) -> None:
         while True:
@@ -52,7 +52,7 @@ class MinMaxAlgorithm:
             if time_passed < self._min_epoch_time:
                 time.sleep(time_passed)
 
-    def _run_one_min_max_epoch(self):
+    def _run_one_min_max_epoch(self) -> None:
         image = self._http_capture.get_snapshot()
         if image is None:
             return
@@ -66,6 +66,7 @@ class MinMaxAlgorithm:
 
         if is_human_in_image_now:
             # skip this iteration
+            self._clear_count_history()
             self._logger.debug("Human is detected")
             self._is_human_was_detected = True
             return
@@ -94,10 +95,10 @@ class MinMaxAlgorithm:
                     return
                 if self._check_if_call_models(is_human_in_image_now):
                     if self._zones:
-                        model_preds_to_use = model_preds_boxes if "box" in item["task"] else model_preds_bottles
+                        model_preds_to_use = model_preds_bottles if "bottle" in item["task"] else model_preds_boxes
+                        boxes_preds = None
                         for idx, zone in enumerate(self._zones):
                             zone_coords = convert_coords_from_dict_to_list(zone["coords"][0])
-                            boxes_preds = None
                             if check_box_in_area(subarr_coord, zone_coords):
                                 boxes_preds = filter_boxes(
                                       zone_coords,
@@ -108,11 +109,10 @@ class MinMaxAlgorithm:
                                 self._logger.debug(f"{item.get('itemName')} item -> {zone.get('zoneName')} zone")
                                 item["zoneId"] = zone.get("zoneId")
                                 break
-                            if boxes_preds is None:
-                                self._logger.warning(f"No zone found for {item['itemName']} item")
-                                item["zoneId"] = zone.get("zoneId")
-                                boxes_preds = [[]]
-                                break
+                        if boxes_preds is None:
+                            self._logger.warning(f"No zone found for {item['itemName']} item")
+                            item["zoneId"] = zone.get("zoneId")
+                            boxes_preds = [[]]
                     else:
                         send_request_func = self._model_preds_receiver.predict_boxes if "box" in item["task"] else \
                                                                          self._model_preds_receiver.predict_bottles
