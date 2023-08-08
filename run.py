@@ -157,6 +157,6 @@ class MinMaxAlgorithm:
                 coords_per_area.append(coord_item_ctxt)
         self._logger.debug("Report creation")
         self._reporter.send_report_to_server(
-        self._reporter.create_report(n_boxes_per_area, image, self._areas, coords_per_area, self._zones))
+        self._reporter.create_report(n_boxes_per_area, image, self._areas, coords_per_area, self._zones.copy()))
         self._step_count_history.clear()
         self._logger.debug("Report sent")

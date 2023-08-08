@@ -72,6 +72,7 @@ class Reporter:
                             debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
                             is_red_line_in_subarea = is_red_line_in_item = True
                     text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
+                    rectangle_color = (51, 51, 255) if "low stock level" in text_item else (0, 255, 0)
                 else:
                     text_item = f"{item_name}: "
                     if len(boxes_coords[item_index][subarr_idx]) == 0:
@@ -80,8 +81,8 @@ class Reporter:
                         text_item += 'low stock level'
                     else:
                         text_item += 'in stock'
+                    rectangle_color = (0, 255, 0) if "in stock" in text_item else (51, 51, 255)
 
-                rectangle_color = (0, 255, 0) if "in stock" in text_item else (51, 51, 255)
                 debug_user_image = draw_rect(debug_user_image, area_coords, rectangle_color, thickness=2)
 
                 if not multi_row:
@@ -116,7 +117,7 @@ class Reporter:
 
 
             if multi_row:
-                status_text = 'low stock level' if is_red_line_in_item else 'In stock'
+                status_text = 'Low stock' if is_red_line_in_item else 'In stock'
             else:
                 if total_number == 0:
                     status_text = 'Out of stock'
