@@ -3,10 +3,10 @@
         0
     ],
     "iou_thres": 0.5,
-    "conf_thres": 0.46,
-    "config_path": "weights/yolor_csp_x.cfg",
-    "box_detect_model": "weights/min_max_v0.3.10.pt",
-    "human_detect_model": "weights/min_max_v0.4.4b.pt",
+    "conf_thres": 0.5,
+    "config_path": "weigths/yolor_csp_x.cfg",
+    "box_detect_model": "weigths/min_max_v0.3.10.pt",
+    "human_detect_model": "weigths/min_max_v0.4.4b.pt",
     "img_size": 640,
     "port": 5000
 }

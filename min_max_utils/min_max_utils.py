@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 from min_max_utils.img_process_utils import transfer_coords
 from typing import Sequence
+import numba
 
 
 def drop_area(areas: Sequence[dict], item_idx: int, item: dict, subarea_idx: int):
@@ -113,7 +114,7 @@ def check_box_in_area(box_coord, area_coord):
 def filter_boxes(main_item_coords, boxes_coords, area_coords=None, check=True):
     result = []
     for box_coord in boxes_coords:
-        box_coord = transfer_coords(box_coord, main_item_coords)
+        box_coord = transfer_coords(box_coord, np.array(main_item_coords).astype(np.int64))
         if not check:
             result.append(box_coord)
         elif check and check_box_in_area(box_coord[:4], area_coords):

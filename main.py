@@ -3,9 +3,8 @@ from min_max_utils.min_max_utils import create_logger
 import warnings
 import os
 from dotenv import load_dotenv
-from run import run_min_max
+from run import MinMaxAlgorithm
 from confs.load_configs import *
-import ast
 
 
 warnings.filterwarnings("ignore")
@@ -27,4 +26,5 @@ logger = create_logger()
 
 dataset = HTTPLIB2Capture(source, username=username, password=password, logger=logger)
 
-run_min_max(dataset, logger, areas, folder, DEBUG_FOLDER, server_url, zones)
+algo = MinMaxAlgorithm(dataset, logger, areas, folder, server_url, zones)
+algo.start()

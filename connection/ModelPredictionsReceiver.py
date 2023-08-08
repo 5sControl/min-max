@@ -44,8 +44,9 @@ class ModelPredictionsReceiver:
                 }
             )
             response.raise_for_status()
-            self._logger.debug("Bottles preds received")
-            return np.array(response.json().get("coordinates"))
+            preds = np.array(response.json().get("coordinates"))
+            self._logger.debug(f"Bottles preds received ===> \n {preds} \n")
+            return preds
         except Exception as exc:
             self._logger.critical("Cannot send request to model server. Error - {}".format(exc))
 
@@ -59,8 +60,9 @@ class ModelPredictionsReceiver:
                 }
             )
             response.raise_for_status()
-            self._logger.debug("Boxes preds received")
-            return np.array(response.json().get("coordinates"))
+            preds = np.array(response.json().get("coordinates"))
+            self._logger.debug(f"Boxes preds received ===> \n {preds} \n")
+            return preds
         except Exception as exc:
             self._logger.critical("Cannot send request to model server. Error - {}".format(exc))
 
