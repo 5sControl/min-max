@@ -104,20 +104,24 @@ def most_common(lst):
     return max(lst, key=data.get)
 
 
-def check_box_in_area(box_coord, area_coord):
-    box_center = ((box_coord[0] + box_coord[2]) / 2, (box_coord[1] + box_coord[3]) / 2)
-    if area_coord[0] < box_center[0] <= area_coord[2] and area_coord[1] < box_center[1] <= area_coord[3]:
-        return True
+def check_box_in_area(box_coord: list, area_coord: list):
+    box_corners = (
+        (box_coord[0], box_coord[1]),
+        (box_coord[0], box_coord[3]),
+        (box_coord[2], box_coord[1]),
+        (box_coord[2], box_coord[3])
+    )
+    for box_corner in box_corners:
+        if area_coord[0] < box_corner[0] <= area_coord[2] and area_coord[1] < box_corner[1] <= area_coord[3]:
+            return True
     return False
 
 
-def filter_boxes(main_item_coords, boxes_coords, area_coords=None, check=True):
+def filter_boxes(main_item_coords, boxes_coords, area_coords=None):
     result = []
     for box_coord in boxes_coords:
         box_coord = transfer_coords(box_coord, np.array(main_item_coords).astype(np.int64))
-        if not check:
-            result.append(box_coord)
-        elif check and check_box_in_area(box_coord[:4], area_coords):
+        if check_box_in_area(box_coord[:4], area_coords):
             result.append(box_coord)
     return [len(result), result]
 

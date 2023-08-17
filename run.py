@@ -29,6 +29,13 @@ class MinMaxAlgorithm:
         return (self._is_human_was_detected and not is_human_in_image_now) or \
                (not self._is_human_was_detected and not is_human_in_image_now and len(self._step_count_history))
     
+    def _add_zone_id_key_for_items(self):
+        for item_idx, item in enumerate(self._areas):
+            item_coords = convert_coords_from_dict_to_list(item["coords"][0])
+            for zone in self._zones:
+                if check_box_in_area(item_coords, convert_coords_from_dict_to_list(zone["coords"][0])):
+                    self._areas[item_idx]["zoneId"] = zone["zoneId"]
+                    
     def _crop_image_by_zones(self, image: np.array, zones: dict) -> dict:
         cropped_images = {}
         for zone in zones:
@@ -43,6 +50,7 @@ class MinMaxAlgorithm:
         self._step_count_history.clear()
 
     def start(self) -> None:
+        self._add_zone_id_key_for_items()
         while True:
             start_epoch_time = time.time()
             self._run_one_min_max_epoch()
