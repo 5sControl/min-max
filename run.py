@@ -7,7 +7,6 @@ from min_max_utils.MinMaxReporter import Reporter
 import time
 import numpy as np
 from typing import Sequence
-import numba
 
 
 class MinMaxAlgorithm:
@@ -25,16 +24,16 @@ class MinMaxAlgorithm:
         self._reporter = Reporter(self._logger, self._server_url, self._folder)
         self._min_epoch_time = 2   # change on config key in future
 
-    def _check_if_call_models(self, is_human_in_image_now: True) -> bool:
+    def _check_if_call_models(self, is_human_in_image_now: True, images_ssim: float) -> bool:
         # check if situation is appropriate for calling models
         return (self._is_human_was_detected and not is_human_in_image_now) or \
                (not self._is_human_was_detected and not is_human_in_image_now and len(self._step_count_history))
     
-    def _crop_image_by_zones(self, image: np.array, zones: list) -> np.array:
-        cropped_images = []
+    def _crop_image_by_zones(self, image: np.array, zones: dict) -> dict:
+        cropped_images = {}
         for zone in zones:
-            x1, y1, x2, y2 = zone
-            cropped_images.append(image[y1:y2, x1:x2])  
+            x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone["coords"][0])
+            cropped_images[zone['zoneId']] = image[y1:y2, x1:x2]
         return cropped_images
     
     def _add_count_to_history(self):
@@ -48,12 +47,12 @@ class MinMaxAlgorithm:
             start_epoch_time = time.time()
             self._run_one_min_max_epoch()
             end_epoch_time = time.time()
-            time_passed = end_epoch_time - start_epoch_time
-            if time_passed < self._min_epoch_time:
-                time.sleep(time_passed)
+            time_left = end_epoch_time - start_epoch_time
+            if time_left < self._min_epoch_time:
+                time.sleep(time_left)
 
     def _run_one_min_max_epoch(self) -> None:
-        image = self._http_capture.get_snapshot()
+        image, similar_v = self._http_capture.get_snapshot()
         if image is None:
             return
         self._logger.debug("Sending request to model server")
@@ -71,17 +70,27 @@ class MinMaxAlgorithm:
             self._is_human_was_detected = True
             return
 
-        if self._check_if_call_models(is_human_in_image_now):
-            # for zone mode
+        if self._check_if_call_models(is_human_in_image_now, similar_v):
             if self._zones:
                 self._logger.debug("Object counting in zones mode...")
-                zone_img_fragments = self._crop_image_by_zones(image, [convert_coords_from_dict_to_list(zone.get("coords")[0]) for zone in self._zones])
-                model_preds_boxes = [self._model_preds_receiver.predict_boxes(crop_img) for crop_img in zone_img_fragments]
-                if any([elem is None for elem in model_preds_boxes]):
+                zone_img_fragments = self._crop_image_by_zones(image, self._zones)
+                model_preds_boxes = {
+                    zone_key:self._model_preds_receiver.predict_boxes(img_fragment) \
+                        for (zone_key, img_fragment) in zone_img_fragments.items()
+                }
+                if any([val is None for _, val in model_preds_boxes.items()]):
+                    self._is_human_was_detected = is_human_in_image_now
                     return
-                model_preds_bottles = [self._model_preds_receiver.predict_bottles(crop_img) for crop_img in zone_img_fragments]
-                if any([elem is None for elem in model_preds_bottles]):
+                model_preds_bottles = {
+                    zone_key:self._model_preds_receiver.predict_bottles(img_fragment) \
+                        for (zone_key, img_fragment) in zone_img_fragments.items()
+                }
+                if any([val is None for _, val in model_preds_bottles.items()]):
+                    self._is_human_was_detected = is_human_in_image_now
                     return
+            else:
+                self._logger.fatal("At least one zone must be in zones variables")
+                exit(1)
         
         step_count_stat = []
         
@@ -93,38 +102,21 @@ class MinMaxAlgorithm:
                     self._logger.warning("Empty area")
                     drop_area(self._areas, item_idx, item, subarr_idx)
                     return
-                if self._check_if_call_models(is_human_in_image_now):
+                if self._check_if_call_models(is_human_in_image_now, similar_v):
                     if self._zones:
                         model_preds_to_use = model_preds_bottles if "bottle" in item["task"] else model_preds_boxes
-                        boxes_preds = None
+                        zone_id = item["zoneId"]
                         for idx, zone in enumerate(self._zones):
-                            zone_coords = convert_coords_from_dict_to_list(zone["coords"][0])
-                            if check_box_in_area(subarr_coord, zone_coords):
-                                boxes_preds = filter_boxes(
-                                      zone_coords,
-                                      model_preds_to_use[idx],
-                                      subarr_coord
-                                )
-                                self._logger.debug(f"{len(model_preds_to_use[idx]) - len(boxes_preds)} boxes filtered")
-                                self._logger.debug(f"{item.get('itemName')} item -> {zone.get('zoneName')} zone")
-                                item["zoneId"] = zone.get("zoneId")
+                            if zone["zoneId"] == zone_id:
+                                zone_coords = convert_coords_from_dict_to_list(zone["coords"][0])
                                 break
-                        if boxes_preds is None:
-                            self._logger.warning(f"No zone found for {item['itemName']} item")
-                            item["zoneId"] = zone.get("zoneId")
-                            boxes_preds = [[]]
-                    else:
-                        send_request_func = self._model_preds_receiver.predict_boxes if "box" in item["task"] else \
-                                                                         self._model_preds_receiver.predict_bottles
-                        model_preds = send_request_func(
-                            image[
-                                subarr_coord[1]:subarr_coord[3],
-                                subarr_coord[0]:subarr_coord[2]
-                            ]
+                            if idx == len(self._zones - 1):
+                                self._logger.fatal(f"Unknown zone id - {zone_id}")
+                        boxes_preds = filter_boxes(
+                            zone_coords,
+                            model_preds_to_use[zone_id],
+                            subarr_coord
                         )
-                        if model_preds is None:
-                            return
-                        boxes_preds = filter_boxes(subarr_coord, model_preds, check=False)
                     item_count_stat.append(boxes_preds)
             if item_count_stat:
                 step_count_stat.append(item_count_stat)

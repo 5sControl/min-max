@@ -31,10 +31,9 @@ class HTTPLIB2Capture:
                 image_cp = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
                 ssim_value = structural_similarity(self._prev_img, image_cp, full=True)[0] * 100
                 self._prev_img = image
-                if ssim_value > 85:
-                    self._logger.debug("Similar images. Skipping...")
-                    return None
-            return image
+            else:
+                ssim_value = 0. 
+            return image, ssim_value
         except Exception as exc:
             self._logger.warning(f"Empty image.\n {exc} \n Skipping iteration...")
-            return None
+            return None, None
