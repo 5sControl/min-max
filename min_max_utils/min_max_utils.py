@@ -6,7 +6,6 @@ import cv2
 import numpy as np
 from min_max_utils.img_process_utils import transfer_coords
 from typing import Sequence
-import numba
 
 
 def drop_area(areas: Sequence[dict], item_idx: int, item: dict, subarea_idx: int):
@@ -14,8 +13,7 @@ def drop_area(areas: Sequence[dict], item_idx: int, item: dict, subarea_idx: int
     if len(item['coords']) == 1:
         logger.info("Item was dropped - {}".format(areas.pop(item_idx)))
     else:
-        logger.info(
-            "Subarea was dropped - {}".format(item.get('coords').pop(subarea_idx)))
+        logger.info("Subarea was dropped - {}".format(item.get('coords').pop(subarea_idx)))
 
 
 def create_logger():

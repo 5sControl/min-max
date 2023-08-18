@@ -2,7 +2,7 @@ from logging import Logger
 from connection import HTTPLIB2Capture, ModelPredictionsReceiver
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
-from confs.load_configs import N_STEPS
+from confs.load_configs import configs
 from min_max_utils.MinMaxReporter import Reporter
 import time
 import numpy as np
@@ -22,9 +22,12 @@ class MinMaxAlgorithm:
         self._step_count_history = []
         self._is_human_was_detected = True
         self._reporter = Reporter(self._logger, self._server_url, self._folder)
-        self._min_epoch_time = 2   # change on config key in future
+        self._min_epoch_time = configs["min_epoch_time"]
+        self._ssim_threshold = configs["ssim_threshold"]
+        self._n_steps = configs["n_steps"]
+        self._first_report = True
 
-    def _check_if_call_models(self, is_human_in_image_now: True, images_ssim: float) -> bool:
+    def _check_if_call_models(self, is_human_in_image_now: bool) -> bool:
         # check if situation is appropriate for calling models
         return (self._is_human_was_detected and not is_human_in_image_now) or \
                (not self._is_human_was_detected and not is_human_in_image_now and len(self._step_count_history))
@@ -63,6 +66,9 @@ class MinMaxAlgorithm:
         image, similar_v = self._http_capture.get_snapshot()
         if image is None:
             return
+        if not self._first_report and similar_v > self._ssim_threshold:
+            self._logger.info("Similar images. Skipping iteration...")
+            return
         self._logger.debug("Sending request to model server")
         human_preds = self._model_preds_receiver.predict_human(image.copy())
         if human_preds is None:
@@ -78,7 +84,7 @@ class MinMaxAlgorithm:
             self._is_human_was_detected = True
             return
 
-        if self._check_if_call_models(is_human_in_image_now, similar_v):
+        if self._check_if_call_models(is_human_in_image_now):
             if self._zones:
                 self._logger.debug("Object counting in zones mode...")
                 zone_img_fragments = self._crop_image_by_zones(image, self._zones)
@@ -110,7 +116,7 @@ class MinMaxAlgorithm:
                     self._logger.warning("Empty area")
                     drop_area(self._areas, item_idx, item, subarr_idx)
                     return
-                if self._check_if_call_models(is_human_in_image_now, similar_v):
+                if self._check_if_call_models(is_human_in_image_now):
                     if self._zones:
                         model_preds_to_use = model_preds_bottles if "bottle" in item["task"] else model_preds_boxes
                         zone_id = item["zoneId"]
@@ -132,7 +138,7 @@ class MinMaxAlgorithm:
         if len(step_count_stat) == len(self._areas):
             self._step_count_history.append(step_count_stat.copy())
 
-        if len(self._step_count_history) == N_STEPS:
+        if len(self._step_count_history) == self._n_steps:
             self._logger.debug("Objects number matrix creation")
             self._send_data_for_report(image)
 
@@ -160,3 +166,4 @@ class MinMaxAlgorithm:
         self._reporter.create_report(n_boxes_per_area, image, self._areas, coords_per_area, self._zones.copy()))
         self._step_count_history.clear()
         self._logger.debug("Report sent")
+        self._first_report = False
