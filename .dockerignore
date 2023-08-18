@@ -4,3 +4,4 @@
 images
 model_image
 videos
+!model_image/flask_configs/flask_confs.json

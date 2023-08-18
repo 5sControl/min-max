@@ -1,4 +1,5 @@
 {
     "n_steps": 5,
-    "debug_folder": "images/min_max_debug"
+    "min_epoch_time": 2,
+    "ssim_threshold": 0.9
 }
