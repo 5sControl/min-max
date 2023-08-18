@@ -3,15 +3,14 @@ import numpy as np
 from logging import Logger
 from PIL import Image
 import io
-
-
-PORT = 5000
+from confs.load_configs import configs
 
 
 class ModelPredictionsReceiver:
     def __init__(self, server_url: str, logger: Logger) -> None:
         self._server_url = server_url
         self._logger = logger
+        self._port = configs["port"]
 
     @staticmethod
     def _convert_image2bytes(image: np.array, format='PNG') -> io.BytesIO:
@@ -24,7 +23,7 @@ class ModelPredictionsReceiver:
     def predict_human(self, img: np.array):
         try:
             response = requests.post(
-                f"{self._server_url}:{PORT}/predict_human",
+                f"{self._server_url}:{self._port}/predict_human",
                 files={
                     "image": ("image", self._convert_image2bytes(img), "image/png")
                 }
@@ -38,7 +37,7 @@ class ModelPredictionsReceiver:
         try:
             self._logger.debug("Sending request to model server")
             response = requests.post(
-                f"{self._server_url}:{PORT}/predict_bottles",
+                f"{self._server_url}:{self._port}/predict_bottles",
                 files={
                     "image": ("image", self._convert_image2bytes(img), "image/png")
                 }
@@ -54,7 +53,7 @@ class ModelPredictionsReceiver:
         try:
             self._logger.debug("Sending request to model server")
             response = requests.post(
-                f"{self._server_url}:{PORT}/predict_boxes",
+                f"{self._server_url}:{self._port}/predict_boxes",
                 files={
                     "image": ("image", self._convert_image2bytes(img), "image/png")
                 }

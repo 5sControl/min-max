@@ -3,8 +3,8 @@ from min_max_utils.min_max_utils import create_logger
 import warnings
 import os
 from dotenv import load_dotenv
-from run import MinMaxAlgorithm
-from confs.load_configs import *
+from MinMaxAlgorithm import MinMaxAlgorithm
+import json
 
 
 warnings.filterwarnings("ignore")
