@@ -58,9 +58,9 @@ class MinMaxAlgorithm:
             start_epoch_time = time.time()
             self._run_one_min_max_epoch()
             end_epoch_time = time.time()
-            time_left = end_epoch_time - start_epoch_time
-            if time_left < self._min_epoch_time:
-                time.sleep(time_left)
+            passed_time = end_epoch_time - start_epoch_time
+            if passed_time < self._min_epoch_time:
+                time.sleep(self._min_epoch_time - passed_time)
 
     def _run_one_min_max_epoch(self) -> None:
         image, similar_v = self._http_capture.get_snapshot()
