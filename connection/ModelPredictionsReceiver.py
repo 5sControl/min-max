@@ -22,6 +22,7 @@ class ModelPredictionsReceiver:
 
     def predict_human(self, img: np.array):
         try:
+            self._logger.debug("Sending human request to model server")
             response = requests.post(
                 f"{self._server_url}:{self._port}/predict_human",
                 files={
@@ -35,7 +36,7 @@ class ModelPredictionsReceiver:
     
     def predict_bottles(self, img: np.array):
         try:
-            self._logger.debug("Sending request to model server")
+            self._logger.debug(f"Sending bottle request to model server, {img.shape}")
             response = requests.post(
                 f"{self._server_url}:{self._port}/predict_bottles",
                 files={
@@ -51,7 +52,7 @@ class ModelPredictionsReceiver:
 
     def predict_boxes(self, img: np.array):
         try:
-            self._logger.debug("Sending request to model server")
+            self._logger.debug(f"Sending boxes request to model server, {img.shape}")
             response = requests.post(
                 f"{self._server_url}:{self._port}/predict_boxes",
                 files={
