@@ -1,5 +1,5 @@
 from logging import Logger
-from connection import HTTPLIB2Capture, ModelPredictionsReceiver
+from connection import ImageCapture, ModelPredictionsReceiver
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import configs
@@ -10,7 +10,7 @@ from typing import Sequence
 
 
 class MinMaxAlgorithm:
-    def __init__(self, http_capture: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
+    def __init__(self, http_capture: ImageCapture, logger: Logger, areas: Sequence[dict],
                 folder: str, server_url: str, zones: list) -> None:
         self._http_capture = http_capture
         self._logger = logger

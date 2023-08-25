@@ -1,2 +1,2 @@
-from .HTTPLIB2Capture import HTTPLIB2Capture
+from .ImageCapture import ImageCapture
 from .ModelPredictionsReceiver import ModelPredictionsReceiver
