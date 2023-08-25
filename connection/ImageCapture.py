@@ -3,27 +3,36 @@ import numpy as np
 import cv2
 from skimage.metrics import structural_similarity
 from logging import Logger
+import socketio
 
 
-class HTTPLIB2Capture:
+sio = socketio.Client()
+
+
+class ImageCapture:
     def __init__(self, path, **kwargs):
-        self._http_connection = httplib2.Http(".cache")
         self._camera_url = path
         self._username = kwargs.get('username', None)
         self._password = kwargs.get('password', None)
         self._logger : Logger = kwargs.get('logger')
         self._prev_img = None
+
+        global sio
+        sio.connect(kwargs.get("server_url"))
+        sio.wait()
+
         if not self._username or not self._password:
             self.logger.warning("Empty password or username")
+
+    @sio.on('snapshot_updated')
+    def handle_server_data(data):
+        return data.get('camera_ip'), data.get('screenshot')
 
     def get_snapshot(self) -> cv2.Mat:
         self._http_connection.add_credentials(self._username, self._password)
         try:
-            resp, content = self._http_connection.request(
-                self._camera_url, 
-                "GET", 
-                body="foobar"
-            )
+            print(self.handle_server_data())
+            exit(1)
             img_array = np.frombuffer(content, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
             if self._prev_img is not None:
