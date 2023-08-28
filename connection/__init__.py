@@ -1,2 +1,2 @@
-from .ImageCapture import ImageCapture
+from .ImageCapture import ImageCapture, run_sio
 from .ModelPredictionsReceiver import ModelPredictionsReceiver

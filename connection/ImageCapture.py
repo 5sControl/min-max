@@ -6,43 +6,41 @@ from logging import Logger
 import socketio
 
 
-sio = socketio.Client()
+sio = socketio.AsyncClient()
+images = {}
 
 
 class ImageCapture:
     def __init__(self, path, **kwargs):
         self._camera_url = path
-        self._username = kwargs.get('username', None)
-        self._password = kwargs.get('password', None)
+        self._username = kwargs.get('username')
+        self._password = kwargs.get('password')
         self._logger : Logger = kwargs.get('logger')
         self._prev_img = None
-
-        global sio
-        sio.connect(kwargs.get("server_url"))
-        sio.wait()
-
         if not self._username or not self._password:
             self.logger.warning("Empty password or username")
 
-    @sio.on('snapshot_updated')
-    def handle_server_data(data):
-        return data.get('camera_ip'), data.get('screenshot')
-
     def get_snapshot(self) -> cv2.Mat:
-        self._http_connection.add_credentials(self._username, self._password)
         try:
-            print(self.handle_server_data())
-            exit(1)
-            img_array = np.frombuffer(content, np.uint8)
+            global images
+            image = images[self._camera_url]
+            img_array = np.frombuffer(image, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-            if self._prev_img is not None:
-                self._prev_img = cv2.cvtColor(self._prev_img, cv2.COLOR_BGR2GRAY)
-                image_cp = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
-                ssim_value = structural_similarity(self._prev_img, image_cp, full=True)[0] * 100
-                self._prev_img = image
-            else:
-                ssim_value = 0. 
-            return image, ssim_value
+            return image
         except Exception as exc:
             self._logger.warning(f"Empty image.\n {exc} \n Skipping iteration...")
-            return None, None
+            return None
+
+@sio.event
+async def connect():
+    print("Connection")
+
+@sio.event
+async def snapshot_updated(data):
+    camera_url, screen = data.get("camera_ip"), data.get("screenshot")
+    global images
+    images[camera_url] = screen
+
+async def run_sio(url):
+    await sio.connect(url)
+    await sio.wait()
