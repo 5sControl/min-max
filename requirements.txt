@@ -6,5 +6,4 @@ Pillow==9.5.0
 python-dotenv==1.0.0
 requests==2.27.1
 numba==0.57.1
-scikit-image==0.19.3
 python-socketio==5.8.0
