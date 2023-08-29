@@ -1,16 +1,17 @@
 from logging import Logger
-from connection import HTTPLIB2Capture, ModelPredictionsReceiver
+from connection import ImageCapture, ModelPredictionsReceiver
 from min_max_utils.min_max_utils import filter_boxes, check_box_in_area, convert_coords_from_dict_to_list, drop_area, \
     most_common
 from confs.load_configs import configs
 from min_max_utils.MinMaxReporter import Reporter
 import time
 import numpy as np
+import asyncio
 from typing import Sequence
 
 
 class MinMaxAlgorithm:
-    def __init__(self, http_capture: HTTPLIB2Capture, logger: Logger, areas: Sequence[dict],
+    def __init__(self, http_capture: ImageCapture, logger: Logger, areas: Sequence[dict],
                 folder: str, server_url: str, zones: list) -> None:
         self._http_capture = http_capture
         self._logger = logger
@@ -52,22 +53,19 @@ class MinMaxAlgorithm:
     def _clear_count_history(self):
         self._step_count_history.clear()
 
-    def start(self) -> None:
+    async def start(self) -> None:
         self._add_zone_id_key_for_items()
         while True:
             start_epoch_time = time.time()
             self._run_one_min_max_epoch()
             end_epoch_time = time.time()
-            time_left = end_epoch_time - start_epoch_time
-            if time_left < self._min_epoch_time:
-                time.sleep(time_left)
+            passed_time = end_epoch_time - start_epoch_time
+            if passed_time < self._min_epoch_time:
+                await asyncio.sleep(self._min_epoch_time - passed_time)
 
     def _run_one_min_max_epoch(self) -> None:
-        image, similar_v = self._http_capture.get_snapshot()
+        image = self._http_capture.get_snapshot()
         if image is None:
-            return
-        if not self._first_report and similar_v > self._ssim_threshold:
-            self._logger.info("Similar images. Skipping iteration...")
             return
         self._logger.debug("Sending request to model server")
         human_preds = self._model_preds_receiver.predict_human(image.copy())

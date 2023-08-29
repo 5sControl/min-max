@@ -1,2 +1,2 @@
-from .HTTPLIB2Capture import HTTPLIB2Capture
+from .ImageCapture import ImageCapture, run_sio
 from .ModelPredictionsReceiver import ModelPredictionsReceiver
