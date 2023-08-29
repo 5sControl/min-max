@@ -1,7 +1,5 @@
-import httplib2
 import numpy as np
 import cv2
-from skimage.metrics import structural_similarity
 from logging import Logger
 import socketio
 
