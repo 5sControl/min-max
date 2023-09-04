@@ -17,7 +17,8 @@ class ImageCapture:
 
     def get_snapshot(self) -> cv2.Mat:
         try:
-            image = requests.get(f"{self._server_url}/get_snapshot", params={"camera_ip": self._camera_ip})
+            resp = requests.get(f"http://{self._server_url}:7777/get_snapshot", params={"camera_ip": self._camera_ip})
+            image = resp.content
             img_array = np.frombuffer(image, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
             return image

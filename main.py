@@ -1,4 +1,4 @@
-from connection import ImageCapture, run_sio
+from connection import ImageCapture
 from min_max_utils.min_max_utils import create_logger
 import warnings
 import os
@@ -19,16 +19,17 @@ zones = extra.get("zones")
 username = os.environ.get("username")
 password = os.environ.get("password")
 server_url = os.environ.get("server_url")
-source = os.environ.get("camera_ip")
+camera_ip = os.environ.get("camera_ip")
 folder = os.environ.get("folder")
 
 logger = create_logger()
 
 dataset = ImageCapture(
-    source,
+    camera_ip,
     username=username, 
     password=password, 
-    logger=logger
+    logger=logger,
+    server_url=server_url
 )
 
 algo = MinMaxAlgorithm(dataset, logger, areas, folder, server_url, zones)
