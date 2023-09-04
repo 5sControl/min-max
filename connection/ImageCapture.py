@@ -36,6 +36,7 @@ async def connect():
 @sio.event
 async def snapshot_updated(data):
     camera_url, screen = data.get("camera_ip"), data.get("screenshot")
+    print(f"Image on {camera_url} camera updated")
     global images
     images[camera_url] = screen
 
