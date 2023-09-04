@@ -6,7 +6,6 @@ from confs.load_configs import configs
 from min_max_utils.MinMaxReporter import Reporter
 import time
 import numpy as np
-import asyncio
 from typing import Sequence
 
 
@@ -53,7 +52,7 @@ class MinMaxAlgorithm:
     def _clear_count_history(self):
         self._step_count_history.clear()
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self._add_zone_id_key_for_items()
         while True:
             start_epoch_time = time.time()
@@ -61,7 +60,7 @@ class MinMaxAlgorithm:
             end_epoch_time = time.time()
             passed_time = end_epoch_time - start_epoch_time
             if passed_time < self._min_epoch_time:
-                await asyncio.sleep(self._min_epoch_time - passed_time)
+                time.sleep(self._min_epoch_time - passed_time)
 
     def _run_one_min_max_epoch(self) -> None:
         image = self._http_capture.get_snapshot()
