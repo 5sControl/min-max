@@ -1,12 +1,7 @@
 import numpy as np
 import cv2
 from logging import Logger
-import socketio
 import requests
-
-
-sio = socketio.AsyncClient()
-images = {}
 
 
 class ImageCapture:

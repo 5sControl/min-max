@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 from MinMaxAlgorithm import MinMaxAlgorithm
 import json
-import asyncio
 
 
 warnings.filterwarnings("ignore")
