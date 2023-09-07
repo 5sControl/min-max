@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 from logging import Logger
-import requests
+import httplib2
+import time
 
 
 class ImageCapture:
@@ -12,13 +13,18 @@ class ImageCapture:
         self._logger : Logger = kwargs.get('logger')
         self._server_url = kwargs.get("server_url")
         self._prev_img = None
+        self._conn = httplib2.Http(".cache")
         if not self._username or not self._password:
             self.logger.warning("Empty password or username")
 
     def get_snapshot(self) -> cv2.Mat:
+        self._conn.add_credentials(self._username, self._password)
         try:
-            resp = requests.get(f"http://{self._server_url}:7777/get_snapshot", params={"camera_ip": self._camera_ip})
-            image = resp.content
+            resp, image = self._conn.request(
+                self._camera_ip, 
+                "GET", 
+                body="foobar"
+            )
             img_array = np.frombuffer(image, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
             return image

@@ -3,6 +3,7 @@ from yolor.model import get_model
 import numpy as np
 from yolor.utils.datasets import letterbox
 from yolor.utils.general import non_max_suppression, scale_coords
+import time
 
 
 class YOLORObjectDetectionModel:
@@ -27,9 +28,10 @@ class YOLORObjectDetectionModel:
     @torch.no_grad()
     def __call__(self, img: np.array) -> list:
         img = self.__preprocess_image__(img)
+        t1 = time.time()
         pred = self.model(img, augment=False)[0]
-        pred = non_max_suppression(
-            pred, self.conf_thresh, self.iou_thresh, classes=self.classes, agnostic=False)[0]
-        pred[:, :4] = scale_coords(
-            img.shape[2:], pred[:, :4], self.img_shape).round()
+        t2 = time.time()
+        self.logger.info(f"Time used for prediction - {t2 - t1} s")
+        pred = non_max_suppression(pred, self.conf_thresh, self.iou_thresh, classes=self.classes, agnostic=False)[0]
+        pred[:, :4] = scale_coords(img.shape[2:], pred[:, :4], self.img_shape).round()
         return pred[:, :5]

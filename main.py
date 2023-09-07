@@ -19,7 +19,7 @@ zones = extra.get("zones")
 username = os.environ.get("username")
 password = os.environ.get("password")
 server_url = os.environ.get("server_url")
-camera_ip = os.environ.get("camera_ip")
+camera_ip = os.environ.get("camera_url")
 folder = os.environ.get("folder")
 
 logger = create_logger()

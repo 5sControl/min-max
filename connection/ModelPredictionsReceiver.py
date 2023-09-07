@@ -11,6 +11,7 @@ class ModelPredictionsReceiver:
         self._server_url = server_url
         self._logger = logger
         self._port = configs["port"]
+        print("server_url - ", self._server_url)
 
     @staticmethod
     def _convert_image2bytes(image: np.array, format='PNG') -> io.BytesIO:

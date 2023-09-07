@@ -37,7 +37,6 @@ def draw_text_util(img: np.array, text: str, coords: Sequence[int], text_color: 
         fill=text_color,
         min_font_size=min_font_size
     )
-    # noinspection PyTypeChecker
     img = np.asarray(pil_img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     return img
