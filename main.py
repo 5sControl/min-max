@@ -1,11 +1,10 @@
-from connection import ImageCapture, run_sio
+from connection import ImageCapture
 from min_max_utils.min_max_utils import create_logger
 import warnings
 import os
 from dotenv import load_dotenv
 from MinMaxAlgorithm import MinMaxAlgorithm
 import json
-import asyncio
 
 
 warnings.filterwarnings("ignore")
@@ -20,30 +19,18 @@ zones = extra.get("zones")
 username = os.environ.get("username")
 password = os.environ.get("password")
 server_url = os.environ.get("server_url")
-source = os.environ.get("camera_url")
+camera_ip = os.environ.get("camera_url")
 folder = os.environ.get("folder")
 
 logger = create_logger()
 
 dataset = ImageCapture(
-    source,
+    camera_ip,
     username=username, 
     password=password, 
-    logger=logger
+    logger=logger,
+    server_url=server_url
 )
 
 algo = MinMaxAlgorithm(dataset, logger, areas, folder, server_url, zones)
 algo.start()
-
-
-async def main():
-    await asyncio.gather(run_sio(server_url + ':3456'), algo.start())
-
-
-loop = asyncio.get_event_loop()
-try:
-    loop.run_until_complete(main())
-except Exception as exc:
-    print(exc)
-finally:
-    loop.close()
