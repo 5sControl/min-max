@@ -1,8 +1,7 @@
 from PIL import Image
 from flask import Flask, jsonify, request
-from flask_configs.load_configs import *
+from flask_configs.load_configs import bottle_model_configs, box_model_configs, human_model_configs
 from ObjectDetectionModel import YOLOv8ObjDetectionModel
-from YOLORObjectDetectionModel import YOLORObjectDetectionModel
 import numpy as np
 import colorlog
 import logging
@@ -24,9 +23,9 @@ logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
 app = Flask(__name__)
-human_model = YOLORObjectDetectionModel(HUMAN_MODEL_PATH, CONF_PATH, CONF_THRES, IOU_THRES, CLASSES, logger=logger)
-box_model = YOLOv8ObjDetectionModel(BOX_MODEL_PATH, CONF_THRES, IOU_THRES, CLASSES)
-bottle_model = YOLORObjectDetectionModel(HUMAN_MODEL_PATH, CONF_PATH, 0.2, IOU_THRES, [39], logger=logger)
+human_model = YOLOv8ObjDetectionModel(**human_model_configs)
+box_model = YOLOv8ObjDetectionModel(**box_model_configs)
+bottle_model = YOLOv8ObjDetectionModel(**bottle_model_configs)
 
 
 convert_bytes2image = lambda bytes: np.array(Image.open(io.BytesIO(bytes)), dtype=np.uint8)

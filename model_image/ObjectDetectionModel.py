@@ -4,15 +4,16 @@ import numpy as np
 
 
 class YOLOv8ObjDetectionModel:
-    def __init__(self, path: str, conf_thresh: float, iou_thresh: float, classes: list) -> None:
-        self.model = YOLO(path)
+    def __init__(self, model_path: str, conf_thresh: float, iou_thresh: float, classes: list, img_size: int) -> None:
+        self._model = YOLO(model_path)
         self.conf_thresh = conf_thresh
         self.iou_thresh = iou_thresh
         self.classes = classes
+        self.img_size = img_size
 
     @torch.no_grad()
     def __call__(self, img: np.array, classes: list = None) -> list:
-        results = self.model(
+        results = self._model(
             source=img,
             conf=self.conf_thresh,
             iou=self.iou_thresh,

@@ -1,12 +1,30 @@
 {
-    "classes": [
-        0
-    ],
-    "iou_thres": 0.5,
-    "conf_thres": 0.5,
-    "config_path": "weigths/yolor_csp_x.cfg",
-    "box_detect_model": "weigths/min_max_v0.3.10.pt",
-    "human_detect_model": "weigths/min_max_v0.4.4b.pt",
-    "img_size": 640,
+    "box_model": {
+        "classes": [
+            0
+        ],
+        "iou_thresh": 0.5,
+        "conf_thresh": 0.5,
+        "model_path": "weigths/min_max_v0.3.10_box.pt",
+        "img_size": 640
+    },
+    "human_model": {
+        "classes": [
+            0
+        ],
+        "iou_thresh": 0.5,
+        "conf_thresh": 0.5,
+        "model_path": "weigths/min_max_v0.5.2_bottle.pt",
+        "img_size": 640
+    },
+    "bottle_model": {
+        "classes": [
+            0
+        ],
+        "iou_thresh": 0.5,
+        "conf_thresh": 0.6,
+        "model_path": "weigths/min_max_v0.5.2_human.pt",
+        "img_size": 640
+    },
     "port": 5000
 }
