@@ -121,7 +121,7 @@ class MinMaxAlgorithm:
                             if zone["zoneId"] == zone_id:
                                 zone_coords = convert_coords_from_dict_to_list(zone["coords"][0])
                                 break
-                            if idx == len(self._zones - 1):
+                            if idx == len(self._zones) - 1:
                                 self._logger.fatal(f"Unknown zone id - {zone_id}")
                         boxes_preds = filter_boxes(
                             zone_coords,
