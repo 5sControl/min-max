@@ -14,16 +14,16 @@
         ],
         "iou_thresh": 0.5,
         "conf_thresh": 0.5,
-        "model_path": "weigths/min_max_v0.5.2_bottle.pt",
+        "model_path": "weigths/min_max_v0.5.2_human.pt",
         "img_size": 640
     },
     "bottle_model": {
         "classes": [
-            0
+            39
         ],
         "iou_thresh": 0.5,
-        "conf_thresh": 0.6,
-        "model_path": "weigths/min_max_v0.5.2_human.pt",
+        "conf_thresh": 0.5,
+        "model_path": "weigths/min_max_v0.5.2_bottle.pt",
         "img_size": 640
     },
     "port": 5000

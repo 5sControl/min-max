@@ -1,6 +1,7 @@
 **/dataset
 **/database
 **/images
+*.pt
 .git
 images
 model_image
