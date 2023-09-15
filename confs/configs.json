@@ -1,5 +1,5 @@
 {
     "n_steps": 5,
-    "min_epoch_time": 2,
+    "min_epoch_time": 3,
     "ssim_threshold": 0.9
 }
