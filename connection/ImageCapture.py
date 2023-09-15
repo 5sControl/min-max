@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from logging import Logger
 import requests
+from skimage.metrics import structural_similarity
 
 
 class ImageCapture:
@@ -20,7 +21,13 @@ class ImageCapture:
             resp = requests.get(self._camera_ip)
             img_array = np.frombuffer(resp.content, np.uint8)
             image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-            return image
+            ssim_value = 0.
+            if self._prev_img is not None:
+                self._prev_img = cv2.cvtColor(self._prev_img, cv2.COLOR_BGR2GRAY)
+                image_cp = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
+                ssim_value = structural_similarity(self._prev_img, image_cp, full=True)[0]
+            self._prev_img = image
+            return image, ssim_value
         except Exception as exc:
             self._logger.warning(f"Empty image.\n {exc} \n Skipping iteration...")
-            return None
+            return None, None
