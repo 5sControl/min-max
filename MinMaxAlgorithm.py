@@ -66,7 +66,7 @@ class MinMaxAlgorithm:
         image, ssim_value = self._http_capture.get_snapshot()
         if image is None:
             return
-        if not self._first_report and ssim_value > self._ssim_threshold:
+        if not self._first_report and not self._is_human_was_detected and ssim_value > self._ssim_threshold:
             self._logger.info("Similar images. Skipping iteration...")
             return
         self._logger.debug("Sending request to model server")
