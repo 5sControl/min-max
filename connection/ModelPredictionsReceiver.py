@@ -3,6 +3,7 @@ import numpy as np
 from logging import Logger
 from PIL import Image
 import io
+import cv2
 from confs.load_configs import configs
 
 
@@ -52,6 +53,7 @@ class ModelPredictionsReceiver:
 
     def predict_boxes(self, img: np.array):
         try:
+            cv2.imwrite("test.png", img)
             self._logger.debug(f"Sending boxes request to model server, {img.shape}")
             response = requests.post(
                 f"{self._server_url}:{self._port}/predict_boxes",
