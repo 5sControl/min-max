@@ -48,7 +48,7 @@ class Reporter:
             report.append(zone_dict)
         for item_index, item in enumerate(areas):
             itemid = item['itemId']
-            multi_row = item['task'] == 'red lines'
+            multi_row = item['task'] == 'red line'
 
             item_name = item['itemName']
             user_dbg_image_name_url = self.user_folder + '/' + str(uuid.uuid4()) + '.png'
@@ -72,7 +72,7 @@ class Reporter:
                             debug_user_image = draw_line(debug_user_image, line, area_coords, thickness=4)
                             is_red_line_in_subarea = is_red_line_in_item = True
                     text_item = f"{item_name}: {n_boxes_history[item_index][subarr_idx] if not is_red_line_in_subarea else 'low stock level'}"
-                    rectangle_color = (51, 51, 255) if "low stock level" in text_item else (0, 255, 0)
+                    rectangle_color = (41, 123, 255) if "low stock level" in text_item else (0, 255, 0)
                 else:
                     text_item = f"{item_name}: "
                     if len(boxes_coords[item_index][subarr_idx]) == 0:
@@ -95,15 +95,16 @@ class Reporter:
                             rectangle_color,
                             thickness=2
                         ) 
-                        debug_user_image = draw_text(
-                            debug_user_image,
-                            bbox_coords[:2],
-                            text,
-                            bbox_coords[2] - bbox_coords[0],
-                            (255, 255, 255),
-                            min_font_size=15,
-                            img_fraction=None
-                        ) 
+                        if idx % 5 == 0 or idx == 1 or idx == len(boxes_coords[item_index][subarr_idx]) - 1:
+                            debug_user_image = draw_text(
+                                debug_user_image,
+                                bbox_coords[:2],
+                                text,
+                                bbox_coords[2] - bbox_coords[0],
+                                (0, 255, 0) if idx == len(boxes_coords[item_index][subarr_idx]) else (0, 255, 255), 
+                                min_font_size=15,
+                                img_fraction=None
+                            ) 
 
                 debug_user_image = draw_text(
                     debug_user_image,
@@ -133,7 +134,7 @@ class Reporter:
                 (10, 1000),
                 text_all_img,
                 1920,
-                (255, 0, 0) if status_text in ('Out of stock', 'Low stock') else (0, 255, 0),
+                (255, 255, 255),
                 min_font_size=30,
                 img_fraction=None
             )
