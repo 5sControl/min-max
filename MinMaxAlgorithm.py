@@ -43,6 +43,7 @@ class MinMaxAlgorithm:
         cropped_images = {}
         for zone in zones:
             x1, y1, x2, y2 = convert_coords_from_dict_to_list(zone["coords"][0])
+            print( convert_coords_from_dict_to_list(zone["coords"][0]))
             cropped_images[zone['zoneId']] = image[y1:y2, x1:x2]
         return cropped_images
     
@@ -52,7 +53,19 @@ class MinMaxAlgorithm:
     def _clear_count_history(self):
         self._step_count_history.clear()
 
+    def _add_main_zone(self):
+        min_y = min_x = 2000
+        max_y = max_x = -1
+        for item in self._areas:
+            for coordinates in item["coords"]:
+                min_x = coordinates['x1'] if coordinates['x1'] < min_x else min_x
+                min_y = coordinates['y1'] if coordinates['y1'] < min_y else min_y
+                max_x = coordinates['x2'] if coordinates['x2'] > max_x else max_x
+                max_y = coordinates['y2'] if coordinates['y2'] > max_y else max_y
+        self._zones = [{'zoneId': 1, 'zoneName': 'main', 'coords': [{'x1': min_x, 'x2': max_x, 'y1': min_y, 'y2': max_y}]}]
+
     def start(self) -> None:
+        self._add_main_zone()
         self._add_zone_id_key_for_items()
         while True:
             start_epoch_time = time.time()
