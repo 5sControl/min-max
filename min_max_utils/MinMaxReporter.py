@@ -157,7 +157,7 @@ class Reporter:
         }
         report_for_send = {
             'camera': os.path.basename(self.user_folder),
-            'algorithm': "min_max_control",
+            'algorithm': os.environ.get('algorithm_name'),
             'start_tracking': str(photo_start['date']),
             'stop_tracking': str(photo_start['date']),
             'photos': [{'date': str(photo_start['date'])}],
