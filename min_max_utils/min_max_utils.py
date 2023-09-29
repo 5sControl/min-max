@@ -63,7 +63,7 @@ def find_red_line(img):
     if lines_p is not None:
         for i in range(0, len(lines_p)):
             line = lines_p[i][0]
-            if abs(line[1] - line[3]) < 50:
+            if abs(line[1] - line[3]) < 25:
                 lines.append(line)
     return lines
 
