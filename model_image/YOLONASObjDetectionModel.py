@@ -1,11 +1,12 @@
-from ultralytics import NAS
+from super_gradients.training import models
 import torch
 import numpy as np
 
 
 class YOLONASObjDetectionModel:
     def __init__(self, model_path: str, conf_thresh: float, iou_thresh: float, classes: list, img_size: int) -> None:
-        self._model = NAS(model_path)
+        device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        self._model = models.get(model_path, pretrained_weights='coco').to(device)
         self.conf_thresh = conf_thresh
         self.iou_thresh = iou_thresh
         self.classes = classes
@@ -13,13 +14,8 @@ class YOLONASObjDetectionModel:
 
     @torch.no_grad()
     def __call__(self, img: np.array, classes: list = None) -> list:
-        results = self._model(
-            source=img,
-            conf=self.conf_thresh,
-            iou=self.iou_thresh,
-            max_det=600,
-            classes=self.classes if classes is None else classes,
-            verbose=False
-        )[0].boxes
+        print(img.shape)
+        results = self._model(img)
+        print(results)
         coords_with_confs = torch.hstack((results.xyxy, results.conf.unsqueeze(-1)))
         return coords_with_confs
