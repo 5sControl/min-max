@@ -1,8 +1,7 @@
-colorlog==4.8.0
-httplib2==0.22.0
-numpy==1.22.3
-opencv_python==4.7.0.72
-ultralytics==8.0.136
-Flask==2.2.2
-py-cpuinfo==9.0.0
+ultralytics==8.0.191
 super-gradients==3.2.1
+timm==0.6.7
+Flask==2.2.2
+numpy==1.23.0
+Werkzeug==2.2.2
+colorlog==4.8.0
