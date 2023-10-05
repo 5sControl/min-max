@@ -173,6 +173,6 @@ class Reporter:
                        f'{self.server_url}:8000/api/reports/report-with-photos/'])
         )
         try:
-            requests.post(url=f'{self.server_url}:80/api/reports/report-with-photos/', json=report)
+            requests.post(url=os.environ.get("link_reports"), json=report)
         except Exception as exc:
             self.logger.error("Error while sending report occurred: {}".format(exc))
