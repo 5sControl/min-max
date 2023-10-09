@@ -13,6 +13,73 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
 **Plug-in Min-Max to 5controlS platform to start monitoring your inventory level!**
 
+
+## Getting started 
+
+### Build image for min_max_python algorithm
+- For x86 users
+
+    ```docker build -t 5scontrol/min_max_python:latest .```
+
+- for AArch64 users 
+
+    ```docker buildx build --platform linux/amd64 -t 5scontrol/min_max_python:latest .```
+
+
+### Build image for min_max_python-server algorithm
+
+- For x86 users
+
+    ```docker build -t 5scontrol/min_max_python-server:latest ./model_image```
+
+- For AArch64 users 
+
+    ```docker build buildx --platform linux/amd64 -t 5scontrol/min_max_python-server:latest ./model_image```
+
+
+
+### Run containers
+
+*Check id of container:* ```docker image list```
+
+- For min_max_python
+
+    ```docker run -rm -it min_max_python -e <variables>```
+
+- For min_max_python-server
+
+    ```docker run -rm -it min_max_python-server```
+
+  To run min_max algorithm you have to pass following variables:
+    - ```folder``` -- folder for saving images
+    - ```camera_url``` -- camera url
+    - ```server_url``` -- server url
+    - ```extra``` -- areas data
+
+
+### Run/Test code
+
+- For min_max_python
+
+  ```python main.py```
+
+- For min_max_python-server
+
+  ```cd ./model_image && python -m flask run --host 0.0.0.0 --port 5000```
+
+
+### Push images
+
+- For min_max_python:
+
+  ```docker image push 5scontrol/min_max_python:latest```
+
+- For machine_control_python_server_model:
+
+  ```docker image push 5scontrol/min_max_python-server:latest```
+
+---
+
 # **Project repositories**
 
 The connections between the project repositories are illustrated by the following diagram. 
