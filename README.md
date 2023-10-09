@@ -61,4 +61,18 @@ We also have a list of [good first issues]() that will help you make your first 
 
 # **License**
 
-> Please note that [some](Components-with-copyleft-licensies.md) of the Official Algorithms are using copyleft licensies.  
+> Please note that [some](Components-with-copyleft-licensies.md) of the Official Algorithms are using copyleft licensies.
+
+
+<br>
+<div align="center">
+  <a href="https://5controls.com/" style="text-decoration:none;">
+    <img src="https://github.com/5sControl/Manufacturing-Automatization-Enterprise/blob/3bafa5805821a34e8b825df7cc78e00543fd7a58/assets/Property%201%3DVariant4.png" width="10%" alt="" /></a> 
+  <img src="https://github.com/5sControl/5s-backend/assets/131950264/d48bcf5c-8aa6-42c4-a47d-5548ae23940d" width="3%" alt="" />
+  <a href="https://github.com/5sControl" style="text-decoration:none;">
+    <img src="https://github.com/5sControl/Manufacturing-Automatization-Enterprise/blob/3bafa5805821a34e8b825df7cc78e00543fd7a58/assets/github.png" width="4%" alt="" /></a>
+  <img src="https://github.com/5sControl/5s-backend/assets/131950264/d48bcf5c-8aa6-42c4-a47d-5548ae23940d" width="3%" alt="" />
+  <a href="https://www.youtube.com/@5scontrol" style="text-decoration:none;">
+    <img src="https://github.com/5sControl/Manufacturing-Automatization-Enterprise/blob/ebf176c81fdb62d81b2555cb6228adc074f60be0/assets/youtube%20(1).png" width="5%" alt="" /></a>
+</div>
+
