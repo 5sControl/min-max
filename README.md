@@ -82,6 +82,23 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
 [User Documentation](https://github.com/5sControl/Manufacturing-Automatization-Enterprise/wiki)
 
+
+# **Contributing**
+Thank you for considering contributing to 5controlS. We truly believe that we can build an outstanding product together!
+
+We welcome a variety of ways to contribute. Read below to learn how you can take part in improving 5controlS.
+
+## **Code of conduct**
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## Code contributing
+
+If you want to contribute, read  our [contributing guide](CONTRIBUTING.md) to learn about our development process and pull requests workflow.
+
+We also have a list of [good first issues]() that will help you make your first step to beсoming a 5S contributor.
+
+
 # **Project repositories**
 
 **5controlS Platform:**
@@ -101,20 +118,6 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 **Algorithms Servers:**
 1. [inference-server-js]()
 
-# **Contributing**
-Thank you for considering contributing to 5controlS. We truly believe that we can build an outstanding product together!
-
-We welcome a variety of ways to contribute. Read below to learn how you can take part in improving 5controlS.
-
-## **Code of conduct**
-
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
-
-## Code contributing
-
-If you want to contribute, read  our [contributing guide](CONTRIBUTING.md) to learn about our development process and pull requests workflow.
-
-We also have a list of [good first issues]() that will help you make your first step to beсoming a 5S contributor.
 
 # **License**
 [AGPL-3.0](LICENSE)
