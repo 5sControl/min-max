@@ -117,7 +117,7 @@ If you want to contribute, read  our [contributing guide](CONTRIBUTING.md) to le
 We also have a list of [good first issues]() that will help you make your first step to beсoming a 5S contributor.
 
 # **License**
-[AGPL-3.0](LICENSE.md)
+[AGPL-3.0](LICENSE)
 
 <br>
 <div align="center">
