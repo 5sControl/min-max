@@ -26,7 +26,7 @@ Before sending your pull requests, make sure you do the following:
 - Once the PR is approved, we merge your PR. Good job!
 
 ## How to choose an issue
-We use GitHub issues to manage development process. If you are not sure where to start, you can try working on one of the "good first issue" labeled issues. There are also the issues with "contributions welcome" label. These issues may be a bit more complicated but we believe that these issues suit well for outside contributors.
+We use GitHub issues to manage development process. If you are not sure where to start, you can try working on one of the ["good first issue"](https://github.com/5sControl/min-max/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) labeled issues. There are also the issues with ["contributions welcome"](https://github.com/5sControl/min-max/issues?q=is%3Aopen+is%3Aissue+label%3A%22contributions+welcome%22) label. These issues may be a bit more complicated but we believe that these issues suit well for outside contributions.
 
 If you start working on an issue, leave a comment so that other people know that you're working on it. You can also use the issue comment thread to coordinate if you are working on an issue in a group.
 
