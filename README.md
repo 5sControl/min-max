@@ -14,7 +14,7 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 **Plug-in Min-Max to 5controlS platform to start monitoring your inventory level!**
 
 
-## Getting started 
+# Getting started 
 
 ### Build image for min_max_python algorithm
 - For x86 users
@@ -78,17 +78,11 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
   ```docker image push 5scontrol/min_max_python-server:latest```
 
----
+# **Documentation**
+
+[User Documentation](https://github.com/5sControl/Manufacturing-Automatization-Enterprise/wiki)
 
 # **Project repositories**
-
-The connections between the project repositories are illustrated by the following diagram. 
-
-> Please note that to ensure system stability and perfomance you can use one of the Official 5S algorithms instead of Your Algorithm.
-
-<p align="center">
-  <img src="https://github.com/5sControl/5s-backend/assets/131950264/60cbc463-ce88-4af2-a4ed-7e3c01f7a955" alt="5controlS-diagram" />
-</p>
 
 **5controlS Platform:**
 1. [5s-backend](https://github.com/5sControl/5s-backend)
@@ -107,10 +101,6 @@ The connections between the project repositories are illustrated by the followin
 **Algorithms Servers:**
 1. [inference-server-js]()
 
-# **Documentation**
-
-[User Documentation](https://github.com/5sControl/Manufacturing-Automatization-Enterprise/wiki)
-
 # **Contributing**
 Thank you for considering contributing to 5controlS. We truly believe that we can build an outstanding product together!
 
@@ -127,9 +117,7 @@ If you want to contribute, read  our [contributing guide](CONTRIBUTING.md) to le
 We also have a list of [good first issues]() that will help you make your first step to beсoming a 5S contributor.
 
 # **License**
-
-> Please note that [some](Components-with-copyleft-licensies.md) of the Official Algorithms are using copyleft licensies.
-
+[AGPL-3.0](LICENSE.md)
 
 <br>
 <div align="center">
