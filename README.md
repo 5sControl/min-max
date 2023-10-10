@@ -74,7 +74,7 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
   ```docker image push 5scontrol/min_max_python:latest```
 
-- For machine_control_python_server_model:
+- For min max server image:
 
   ```docker image push 5scontrol/min_max_python-server:latest```
 
