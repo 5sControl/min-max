@@ -14,7 +14,7 @@
         ],
         "iou_thresh": 0.5,
         "conf_thresh": 0.5,
-        "model_path": "weigths/min_max_v0.5.2_human.pt",
+        "model_path": "yolo_nas_s",
         "img_size": 640
     },
     "bottle_model": {
@@ -23,7 +23,7 @@
         ],
         "iou_thresh": 0.5,
         "conf_thresh": 0.5,
-        "model_path": "weigths/min_max_v0.5.2_bottle.pt",
+        "model_path": "yolo_nas_m",
         "img_size": 640
     },
     "port": 5000

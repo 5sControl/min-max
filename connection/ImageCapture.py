@@ -11,7 +11,6 @@ class ImageCapture:
         self._username = kwargs.get('username')
         self._password = kwargs.get('password')
         self._logger : Logger = kwargs.get('logger')
-        self._server_url = kwargs.get("server_url")
         self._prev_img = None
         if not self._username or not self._password:
             self.logger.warning("Empty password or username")
@@ -29,5 +28,6 @@ class ImageCapture:
             self._prev_img = image
             return image, ssim_value
         except Exception as exc:
+            print(self._camera_ip)
             self._logger.warning(f"Empty image.\n {exc} \n Skipping iteration...")
             return None, None
