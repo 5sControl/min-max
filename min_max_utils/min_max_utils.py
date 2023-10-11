@@ -103,15 +103,12 @@ def most_common(lst):
 
 
 def check_box_in_area(box_coord: list, area_coord: list):
-    box_corners = (
-        (box_coord[0], box_coord[1]),
-        (box_coord[0], box_coord[3]),
-        (box_coord[2], box_coord[1]),
-        (box_coord[2], box_coord[3])
-    )
-    for box_corner in box_corners:
-        if area_coord[0] < box_corner[0] <= area_coord[2] and area_coord[1] < box_corner[1] <= area_coord[3]:
-            return True
+    box_center = [
+        (box_coord[0] + box_coord[2]) / 2, 
+        (box_coord[1] + box_coord[3]) / 2
+    ]
+    if area_coord[0] < box_center[0] < area_coord[2] and area_coord[1] < box_center[1] < area_coord[3]:
+        return True
     return False
 
 
