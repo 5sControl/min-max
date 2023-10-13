@@ -96,7 +96,7 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 If you want to contribute, read  our [contributing guide](CONTRIBUTING.md) to learn about our development process and pull requests workflow.
 
-We also have a list of [good first issues]() that will help you make your first step to beсoming a 5S contributor.
+We also have a list of [good first issues](https://github.com/5sControl/min-max/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) that will help you make your first step to beсoming a 5S contributor.
 
 
 # **Project repositories**
@@ -106,7 +106,7 @@ We also have a list of [good first issues]() that will help you make your first 
 2. [5s-frontend](https://github.com/5sControl/5s-frontend)
 3. [5s-algorithms-controller](https://github.com/5sControl/5s-algorithms-controller)
 4. [5s-onvif](https://github.com/5sControl/5s-onvif)
-5. [5s-onvif-finder]()
+5. [5s-onvif-finder](https://github.com/5sControl/5s-onvif-finder)
 
 **Official Algorithms:**
 1. [min-max](https://github.com/5sControl/min-max)
@@ -116,11 +116,13 @@ We also have a list of [good first issues]() that will help you make your first 
 5. [machine-control-js](https://github.com/5sControl/machine-control-js)
 
 **Algorithms Servers:**
-1. [inference-server-js]()
+1. [inference-server-js](https://github.com/5sControl/inference-server-js)
 
 
 # **License**
 [AGPL-3.0](LICENSE)
+
+> Min-Max uses third party libraries that are distributed under their own terms (see [LICENSE-3RD-PARTY.md](https://github.com/5sControl/min-max/blob/main/LICENSE-3RD-PARTY.md)).<br>
 
 <br>
 <div align="center">
