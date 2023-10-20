@@ -13,6 +13,7 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
 **Plug-in Min-Max to 5controlS platform to start monitoring your inventory level!**
 
+> Learn more about Operation control on the [5controlS website](https://5controls.com/solutions/inventory-control).
 
 # Getting started 
 
