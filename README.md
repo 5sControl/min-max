@@ -3,7 +3,7 @@ Min-Max is one of the Official [5controlS](https://5controls.com/) algorithm.
 
 With Min-Max, you can now effortlessly manage your reserves and ensure smooth and uninterrupted production processes. Our software helps you maintain the optimal stock levels by providing real-time inventory tracking and analysis, allowing you to make informed decisions and avoid costly production line stoppages. 
 
-![image](https://github.com/5sControl/min-max/assets/131950264/3751506b-12ba-4455-92da-8382421ec4c8)
+![Min-max](https://github.com/5sControl/5s-user-documentation/blob/main/assets/Min-max.png)
 
 ## Key features
 
