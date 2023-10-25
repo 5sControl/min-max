@@ -16,3 +16,6 @@ jobs:
 
       - name: Push container
         run: docker push 5scontrol/min_max_python:latest
+
+      - name: deploy
+        run: curl 192.168.1.115:4545/deploy-pod?service=minMaxModel    
