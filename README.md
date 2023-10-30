@@ -1,5 +1,5 @@
 # About Min-Max
-Min-Max is one of the Official [5controlS](https://5controls.com/) algorithm.
+Min-Max is one of the Official [5controlS](https://5controls.com/) algorithms.
 
 With Min-Max, you can now effortlessly manage your reserves and ensure smooth and uninterrupted production processes. Our software helps you maintain the optimal stock levels by providing real-time inventory tracking and analysis, allowing you to make informed decisions and avoid costly production line stoppages. 
 
@@ -13,7 +13,7 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
 **Plug-in Min-Max to 5controlS platform to start monitoring your inventory level!**
 
-> Learn more about Operation control on the [5controlS website](https://5controls.com/solutions/inventory-control).
+> Learn more about Min-Max on the [5controlS website](https://5controls.com/solutions/inventory-control).
 
 # Getting started 
 
