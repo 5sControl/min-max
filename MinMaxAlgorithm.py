@@ -25,6 +25,7 @@ class MinMaxAlgorithm:
         self._ssim_threshold = configs["ssim_threshold"]
         self._n_steps = configs["n_steps"]
         self._first_report = True
+        self._send_report = True
 
     def _check_if_call_models(self, is_human_in_image_now: bool) -> bool:
         # check if situation is appropriate for calling models
@@ -80,7 +81,7 @@ class MinMaxAlgorithm:
         image, ssim_value = self._http_capture.get_snapshot()
         if image is None:
             return
-        if not self._first_report and not self._is_human_was_detected and ssim_value > self._ssim_threshold:
+        if not self._first_report and not self._is_human_was_detected and not self._send_report and ssim_value > self._ssim_threshold:
             self._logger.info("Similar images. Skipping iteration...")
             return
         self._logger.debug("Sending request to model server")
@@ -96,6 +97,7 @@ class MinMaxAlgorithm:
             self._clear_count_history()
             self._logger.debug("Human is detected")
             self._is_human_was_detected = True
+            self._send_report = True
             return
 
         is_call_model = self._check_if_call_models(is_human_in_image_now)
@@ -178,3 +180,4 @@ class MinMaxAlgorithm:
         self._step_count_history.clear()
         self._logger.debug("Report sent")
         self._first_report = False
+        self._send_report = False
