@@ -1,0 +1,21 @@
+name: dev
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  Build:
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@main
+
+      - name: Build container
+        run: docker build . -t 5scontrol/min_max_python:latest
+
+      - name: Push container
+        run: docker push 5scontrol/min_max_python:latest
+
+      - name: deploy
+        run: curl 192.168.1.115:4545/deploy-pod?service=minMaxModel    
