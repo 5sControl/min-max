@@ -1,5 +1,5 @@
 # About Min-Max
-Min-Max is one of the Official [5controlS](https://5controls.com/) algorithms. Plug it in our video monitoring system with AI analysis and ERP Integration to facilitate supply chain management and keep up the optimal stock levels.
+Min-Max is one of the Official [5controlS](https://5controls.com/) algorithms. Plug it in our video monitoring system with AI analysis and ERP Integration (Open Source) to facilitate supply chain management and keep up the optimal stock levels.
 
 With Min-Max, you can now effortlessly manage your reserves and ensure smooth and uninterrupted production processes. Our software helps you maintain the optimal stock levels by providing real-time inventory tracking and analysis, allowing you to make informed decisions and avoid costly production line stoppages. 
 
