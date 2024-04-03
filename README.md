@@ -1,5 +1,5 @@
 # About Min-Max
-Min-Max is one of the Official [5controlS](https://5controls.com/) algorithms. Plug it in our video monitoring system with AI analysis and ERP Integration (Open Source) to facilitate supply chain management and keep up the optimal stock levels.
+Min-Max is one of the Official [5sControl](https://5scontrol.com/) algorithms. Plug it in our video monitoring system with AI analysis and ERP Integration (Open Source) to facilitate supply chain management and keep up the optimal stock levels.
 
 With Min-Max, you can now effortlessly manage your reserves and ensure smooth and uninterrupted production processes. Our software helps you maintain the optimal stock levels by providing real-time inventory tracking and analysis, allowing you to make informed decisions and avoid costly production line stoppages. 
 
@@ -11,7 +11,7 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 - notifications about critical levels;
 - automatic ordering for just-in-time deliveries.
 
-**Plug-in Min-Max to 5controlS platform to start monitoring your inventory level!**
+**Plug-in Min-Max to 5sCcontrol platform to start monitoring your inventory level!**
 
 > Learn more about Min-Max on the [5controlS website](https://5controls.com/solutions/inventory-control).
 
@@ -87,9 +87,9 @@ With Min-Max, you can now effortlessly manage your reserves and ensure smooth an
 
 
 # **Contributing**
-Thank you for considering contributing to 5controlS. We truly believe that we can build an outstanding product together!
+Thank you for considering contributing to 5sCcontrol. We truly believe that we can build an outstanding product together!
 
-We welcome a variety of ways to contribute. Read below to learn how you can take part in improving 5controlS.
+We welcome a variety of ways to contribute. Read below to learn how you can take part in improving 5sCcontrol.
 
 ## **Code of conduct**
 
@@ -130,7 +130,7 @@ We also have a list of [good first issues](https://github.com/5sControl/min-max/
 
 <br>
 <div align="center">
-  <a href="https://5controls.com/" style="text-decoration:none;">
+  <a href="https://5scontrol.com/" style="text-decoration:none;">
     <img src="https://github.com/5sControl/Manufacturing-Automatization-Enterprise/blob/3bafa5805821a34e8b825df7cc78e00543fd7a58/assets/Property%201%3DVariant4.png" width="10%" alt="" /></a> 
   <img src="https://github.com/5sControl/5s-backend/assets/131950264/d48bcf5c-8aa6-42c4-a47d-5548ae23940d" width="3%" alt="" />
   <a href="https://github.com/5sControl" style="text-decoration:none;">
